@@ -1,0 +1,7 @@
+bucket
+local.db
+.env
+.air.toml
+node_modules
+tmp
+.idea

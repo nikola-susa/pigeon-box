@@ -1,0 +1,201 @@
+package templates
+
+import (
+    "encoding/json"
+	"github.com/nikola-susa/secret-chat/model"
+)
+
+func renderMarkdown(html string) string {
+    data := map[string]string{
+        "content": html,
+    }
+    bytes, _ := json.Marshal(data)
+    return string(bytes)
+}
+
+templ EditMessage(message model.RenderMessage) {
+    <li tabindex="0" x-data="singleChat()" x-init="init()"
+        id={ "m-" + message.ID }
+        @mouseenter="onHoverIn()"
+        @mouseleave="onHoverOut()"
+        @focusin="onFocusIn()"
+        @focusout="onFocusOut()"
+        class="chat-item flex gap-3 items-start justify-start hover:bg-sidebar/20 p-3 relative focus:bg-sidebar/20 ring-inset focus:ring-primary/20 focus:ring-1 focus-within:bg-sidebar/20 focus-within:ring-1 focus-within:ring-primary/20">
+
+        <div class="grow-0 mt-[1px]">
+            <div class="w-5 h-5 rounded shadow bg-sidebar relative">
+                <img src={ message.User.Avatar } class="absolute inset-0 rounded flex justify-center items-center text-sm text-primary" alt={ message.User.Username }/>
+             </div>
+        </div>
+        <div class="grow flex flex-col gap-1.5 overflow-x-auto">
+            <div class="flex gap-3 items-center">
+                <div class="text-md font-bold text-foreground">{ message.User.Name }</div>
+                <div class="text-alt-foreground font-mono text-sm relative">{ message.Time }</div>
+            </div>
+            <form
+                hx-patch={ "/t/" + message.ThreadID + "/m/" + message.ID }
+                hx-swap="none"
+                onkeydown="if(event.keyCode === 13 && !event.shiftKey) { event.preventDefault(); return false }"
+                hx-trigger="keyup[keyCode==13&&!shiftKey], click from:button[type=submit]"
+                hx-on::after-request="this.reset();"
+                class="relative"
+            >
+                @textareaRichEdit("Edit message", "message", message)
+            </form>
+        </div>
+    </li>
+}
+
+templ ChatBubble(message model.RenderMessage) {
+    <li tabindex="0" x-data="singleChat()" x-init="init()"
+        id={ "m-" + message.ID }
+        @mouseenter="onHoverIn()"
+        @mouseleave="onHoverOut()"
+        @focusin="onFocusIn()"
+        @focusout="onFocusOut()"
+        @keydown="handleKeydown($event, $el)"
+        class="chat-item flex gap-3 items-start justify-start hover:bg-sidebar/20 p-3 relative focus:bg-sidebar/20 ring-inset focus:ring-primary/20 focus:ring-1 focus-within:bg-sidebar/20 focus-within:ring-1 focus-within:ring-primary/20">
+
+        <div class="grow-0 mt-[1px]">
+            <div class="w-5 h-5 rounded shadow bg-sidebar relative">
+                <img src={ message.User.Avatar } class="absolute inset-0 rounded flex justify-center items-center text-sm text-primary" alt={ message.User.Username }/>
+             </div>
+        </div>
+        <div class="grow flex flex-col gap-1.5 overflow-x-auto">
+            <div class="flex gap-3 items-center">
+                <div class="text-md font-bold text-foreground">{ message.User.Name }</div>
+                <div class="text-alt-foreground font-mono text-sm relative">{ message.Time }</div>
+            </div>
+            if message.Text != "" {
+                <div x-data={ renderMarkdown(message.Text) } class="flex flex-col gap-0.5 py-0.5 chat" x-html="renderChat(content)"></div>
+            }
+            if message.File.ID != "" {
+                <div class="flex flex-col gap-0.5 py-0.5 chat">
+                    <div class="text-alt-foreground text-sm flex gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" class="w-3" fill="currentColor"><path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14Z"></path><path d="M7.25 7.689V2a.75.75 0 0 1 1.5 0v5.689l1.97-1.969a.749.749 0 1 1 1.06 1.06l-3.25 3.25a.749.749 0 0 1-1.06 0L4.22 6.78a.749.749 0 1 1 1.06-1.06l1.97 1.969Z"></path></svg>
+                        <span>{ message.File.Name }</span>
+                    </div>
+                    @singleFileInput(message.File)
+                </div>
+            }
+        </div>
+        @ChatBubbleMenu(message)
+    </li>
+}
+
+templ ChatBubbleLayout() {
+    <li tabindex="0" x-data="singleChat()" x-init="init()"
+        @mouseenter="onHoverIn()"
+        @mouseleave="onHoverOut()"
+        @focusin="onFocusIn()"
+        @focusout="onFocusOut()"
+        class="chat-item flex gap-3 items-start justify-start hover:bg-sidebar/20 p-3 relative focus:bg-sidebar/20 ring-inset focus:ring-primary/20 focus:ring-1 focus-within:bg-sidebar/20 focus-within:ring-1 focus-within:ring-primary/20">
+        {children...}
+    </li>
+}
+
+templ ChatBubbleMenu(message model.RenderMessage) {
+    <div x-show="hover" class="absolute top-2 right-3 divider-x divider-border rounded">
+        <div class="flex justify-center">
+            <div
+                x-on:keydown.escape.prevent.stop="closeMenu($refs.menu)"
+                x-on:focusin.window="! $refs.items.contains($event.target) && closeMenu()"
+                @keydown.arrow-up="menuIndexUp()"
+                @keydown.arrow-down="menuIndexDown()"
+                @onmouseleave="close($refs.menu)"
+                x-id="['menu']"
+                class="relative"
+            >
+                <button
+                    x-ref="menu"
+                    x-on:click="toggleMenu()"
+                    :aria-expanded="menuOpen"
+                    :aria-controls="$id('dropdown-button')"
+                    type="button"
+                    class="text-primary w-5 h-5 bg-sidebar/20 border border-border button rounded p-0.5 flex justify-center items-center relative"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M8 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM1.5 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm13 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path></svg>
+                </button>
+
+                 <div
+                    x-ref="items"
+                    x-show="menuOpen"
+                    x-on:click.outside="closeMenu($refs.menu)"
+                    :id="$id('menu-item')"
+                    style="display: none;"
+                    class="dropdown-menu w-[100px]"
+                    x-anchor="$refs.menu"
+                    role="tooltip">
+                    if message.Text != "" {
+                        <button
+                            tabindex="0"
+                            type="button"
+                            x-data={ renderMarkdown(message.Text) }
+                            @click="copyPlainTextClipboard(content)"
+                            class="dropdown-menu-item" tabindex="0">
+                                <div class="flex items-center gap-1.5 grow">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path></svg>
+                                    <span>Copy</span>
+                                </div>
+                                <div>
+                                    <kbd class="text-sm text-alt-foreground">C</kbd>
+                                </div>
+                        </button>
+                    }
+
+                    if message.File.ID != "" {
+                        <a
+                            href={ templ.URL("/t/" + message.ThreadID + "/f/" + message.File.ID) }
+                            tabindex="0"
+                            class="dropdown-menu-item" tabindex="0">
+                                <div class="flex items-center gap-1.5 grow">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" class="w-3" fill="currentColor"><path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14Z"></path><path d="M7.25 7.689V2a.75.75 0 0 1 1.5 0v5.689l1.97-1.969a.749.749 0 1 1 1.06 1.06l-3.25 3.25a.749.749 0 0 1-1.06 0L4.22 6.78a.749.749 0 1 1 1.06-1.06l1.97 1.969Z"></path></svg>
+                                    <span>Download</span>
+                                </div>
+                                <div>
+                                    <kbd class="text-sm text-alt-foreground"></kbd>
+                                </div>
+                        </a>
+                    }
+
+                    if message.IsAuthor && message.Text != "" {
+                        <button
+                            tabindex="0"
+                            type="button"
+                            hx-get={ "/t/" + message.ThreadID + "/m/" + message.ID + "/edit" }
+                            hx-swap="outerHTML"
+                            hx-target="closest li"
+                            hx-trigger="click, submit, keyup-edit from:closest li"
+                            class="dropdown-menu-item" tabindex="0">
+                                <div class="flex items-center gap-1.5 grow">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M11.013 1.427a1.75 1.75 0 0 1 2.474 0l1.086 1.086a1.75 1.75 0 0 1 0 2.474l-8.61 8.61c-.21.21-.47.364-.756.445l-3.251.93a.75.75 0 0 1-.927-.928l.929-3.25c.081-.286.235-.547.445-.758l8.61-8.61Zm.176 4.823L9.75 4.81l-6.286 6.287a.253.253 0 0 0-.064.108l-.558 1.953 1.953-.558a.253.253 0 0 0 .108-.064Zm1.238-3.763a.25.25 0 0 0-.354 0L10.811 3.75l1.439 1.44 1.263-1.263a.25.25 0 0 0 0-.354Z"></path></svg>
+                                    <span>Edit</span>
+                                </div>
+                                <div>
+                                    <kbd class="text-sm text-alt-foreground">E</kbd>
+                                </div>
+                        </button>
+                    }
+
+                    if message.IsAuthor {
+                        <button
+                            tabindex="0"
+                            type="button"
+                            hx-delete={ "/t/" + message.ThreadID + "/m/" + message.ID }
+                            hx-swap="delete" hx-target="closest li"
+                            hx-trigger="click, submit, keyup-delete from:closest li"
+                            class="dropdown-menu-item dropdown-menu-item-danger">
+                                <div class="flex items-center gap-1.5 grow">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75ZM4.496 6.675l.66 6.6a.25.25 0 0 0 .249.225h5.19a.25.25 0 0 0 .249-.225l.66-6.6a.75.75 0 0 1 1.492.149l-.66 6.6A1.748 1.748 0 0 1 10.595 15h-5.19a1.75 1.75 0 0 1-1.741-1.575l-.66-6.6a.75.75 0 1 1 1.492-.15ZM6.5 1.75V3h3V1.75a.25.25 0 0 0-.25-.25h-2.5a.25.25 0 0 0-.25.25Z"></path></svg>
+                                    <span>Delete</span>
+                                </div>
+                                <div>
+                                    <kbd class="text-sm text-danger/70">Del</kbd>
+                                </div>
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}

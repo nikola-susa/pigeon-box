@@ -1,0 +1,413 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+    font-family: 'IBM Plex Sans';
+    font-style: normal;
+    font-weight: 300;
+    font-display: swap;
+    src: url('fonts/IBMPlexSans-Light.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'IBM Plex Sans';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('fonts/IBMPlexSans-SemiBold.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'IBM Plex Sans';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('fonts/IBMPlexSans-Bold.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'IBM Plex Mono';
+    font-style: normal;
+    font-weight: 300;
+    font-display: swap;
+    src: url('fonts/IBMPlexMono-Light.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'IBM Plex Mono';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('fonts/IBMPlexMono-Regular.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'IBM Plex Mono';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('fonts/IBMPlexMono-Bold.ttf') format('truetype');
+}
+
+:root {
+    --font-sans: 'IBM Plex Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+
+    --background: 22.2% 0.017 284.89;
+    --foreground: 92.51% 0.008 271.32;
+
+    --alt-background: 24.38% 0.019 284.91;
+    --alt-foreground: 55.75% 0.016 244.89;
+
+    --sidebar-background: 38.5% 0.036 278.23;
+    --sidebar-foreground: 71.54% 0.026 267.84;
+
+    --border: 33.72% 0.033 284.48;
+
+    --primary: 85.49% 0.061 18.42;
+
+    --secondary-background: 72.59% 0.104 263.1;
+    --secondary-foreground: 70% 0.154 260.709;
+
+    --success: 78.2% 0.148 163.26;
+    --warning: 86.15% 0.157 86.06;
+    --error: 85.49% 0.061 18.42;
+
+    --border-radius: 3px;
+
+    --black: 21.76% 0.018 284.85;
+}
+
+@layer components {
+
+    .label {
+        @apply block text-sm text-sidebar-foreground absolute -top-2 left-2 px-1 bg-background;
+    }
+
+    .divider {
+        @apply border-t border-border my-3 h-[1px] w-full;
+    }
+
+    .chat {
+        @apply relative text-md;
+    }
+
+    .chat :first-child,
+    .chat :first-child > :first-child {
+        @apply mt-0 pt-0;
+    }
+
+    .chat :last-child,
+    .chat :last-child > :last-child {
+        @apply mb-0 pb-0;
+    }
+
+    .chat h1, .chat h2, .chat h3, .chat h4, .chat h5, .chat h6 {
+        @apply mt-4 mb-4 font-bold text-base;
+    }
+
+    .chat h1 {
+        @apply text-lg;
+    }
+
+    .chat h2 {
+        @apply text-base;
+    }
+
+    .chat p {
+        @apply text-base py-0.5 my-0.5;
+    }
+
+    .chat ul, .chat ol {
+        @apply my-1 pl-6 ps-6 text-base;
+    }
+
+    .chat ul li, .chat ol li {
+        @apply py-1;
+    }
+
+    .chat ul {
+        @apply list-disc;
+    }
+
+    .chat ul ul {
+        @apply list-[circle];
+    }
+
+    .chat ol {
+        @apply list-decimal;
+    }
+
+    .chat pre {
+        @apply overflow-auto w-full;
+    }
+
+    .chat pre code {
+        @apply block px-4 py-2 bg-sidebar/20 border-primary/10 text-foreground rounded font-mono text-sm;
+    }
+
+    .chat > code,
+    .chat p > code {
+        @apply px-0.5 mx-0.5 bg-primary/10 leading-[10px] text-sm text-primary/80 border border-primary/10 rounded font-mono break-words;
+    }
+
+    .chat .hljs {
+        @apply flex-1 relative !overflow-x-auto px-3 !py-2 my-2 bg-sidebar/10 border-primary/10 text-foreground font-mono text-sm;
+    }
+
+    .chat hr {
+        @apply my-1.5 border-t border-primary/20 bg-transparent border-dashed;
+    }
+
+    .chat blockquote {
+        @apply relative pl-4 my-4;
+    }
+
+
+    .chat blockquote {
+        @apply relative pl-4 my-2;
+    }
+
+    .markdown-alert {
+        @apply relative pl-9 my-2;
+    }
+
+    .markdown-alert-title {
+        @apply !text-sm text-alt-foreground;
+    }
+
+    .markdown-alert-title svg {
+        @apply absolute top-1 left-3 h-4 w-4 text-foreground/40 fill-current;
+    }
+
+    .markdown-alert *:first-child,
+    .chat blockquote *:first-child {
+        @apply mt-0 pt-0;
+    }
+
+    .markdown-alert *:last-child,
+    .chat blockquote *:last-child {
+        @apply mb-0 pb-0;
+    }
+
+    .markdown-alert:before,
+    .chat blockquote:before {
+        @apply absolute top-0 left-0 h-full w-1 border border-border;
+        content: '';
+    }
+
+    .markdown-alert-tip:before {
+        @apply border-success/30;
+    }
+
+    .markdown-alert-important:before {
+        @apply border-primary/30;
+    }
+
+    .markdown-alert-warning:before {
+        @apply border-warning/30;
+    }
+
+    .markdown-alert-caution:before {
+        @apply border-error/30;
+    }
+
+    .chat table {
+        @apply my-6 text-sm border bg-alt shadow table-auto overflow-scroll w-full;
+    }
+
+    .chat table th {
+        @apply bg-black;
+    }
+
+    .chat table th, .chat table td {
+        @apply !px-4 !py-2 border-b border-border;
+    }
+
+    .chat table th {
+        @apply text-left font-semibold;
+    }
+
+    .chat thead th,
+    .chat table tbody td {
+        @apply border-r;
+    }
+
+    .chat table thead th:last-child,
+    .chat table tbody td:last-child {
+        @apply border-r-0;
+    }
+
+    .chat tbody tr:last-child td {
+        @apply border-b-0;
+    }
+
+    .dropzone {
+    }
+
+    .dropzone.dragging {
+        @apply border-primary bg-alt;
+    }
+
+    .dropzone.expanded {
+        @apply flex fixed h-auto inset-12 z-50 bg-background/50 backdrop-blur p-6 justify-center items-center rounded border border-sidebar border-dashed text-sm text-alt-foreground;
+    }
+
+    .dropzone .dropzone-text {
+        @apply hidden;
+    }
+    .dropzone.expanded .dropzone-text {
+        @apply block;
+    }
+
+    .button {
+        @apply px-2 py-1.5 text-base rounded;
+    }
+
+    .button:focus {
+        @apply ring-2 ring-primary/50;
+    }
+
+    .button-link {
+        @apply text-secondary font-sans cursor-pointer border-none bg-transparent p-0;
+    }
+
+    .button-success {
+        @apply text-success bg-success/10 border-success/30 border;
+    }
+
+    .button-success:hover {
+        @apply text-success bg-success/20;
+    }
+
+    .button-success:disabled {
+        @apply text-alt-foreground bg-transparent border-transparent cursor-not-allowed;
+    }
+
+    .button-success:disabled:hover {
+        @apply text-alt-foreground/70;
+    }
+
+    .button-basic {
+        @apply text-sidebar-foreground bg-sidebar/0 border-transparent border;
+    }
+
+    .button-basic:hover {
+        @apply bg-sidebar/90;
+    }
+
+    #toast-container {
+        @apply fixed bottom-3 right-3 z-50;
+    }
+
+    .toast {
+        @apply py-1.5 px-1.5 text-sidebar-foreground flex justify-start items-center gap-1;
+    }
+
+    .toast-success strong {
+        @apply text-success/70;
+    }
+
+    .toast-error strong {
+        @apply text-error/70;
+    }
+
+    .toast-warning strong {
+        @apply text-warning/70;
+    }
+
+    .message-input-container {
+        @apply relative border-t border-primary/30;
+        border-image: linear-gradient(to right, rgba(66, 66, 90, 0), rgba(66, 66, 90, 0.9), rgba(66, 66, 90, 0)) 30;
+        background-image: linear-gradient(90deg, transparent, rgba(27, 27, 37, 0.02) 50px, rgba(27, 27, 37, 0.02) calc(100% - 50px), transparent);
+    }
+
+    .message-input-container:after {
+        @apply absolute block z-0 inset-0 bg-background/50 pointer-events-none rounded;
+        mask-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHZpZXdCb3g9IjAgMCAxMCAxMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0iY3VycmVudENvbG9yIi8+Cjwvc3ZnPgo=");
+        background-image: linear-gradient(90deg, transparent, rgb(66, 66, 90) 50px, rgb(66, 66, 90) calc(100% - 50px), transparent);
+        background-color: rgb(27, 27, 37);
+        opacity: 0.75;
+        content: '';
+    }
+
+    .message-box-container {
+        @apply relative;
+    }
+
+    .message-box-container:before {
+        @apply absolute block z-0 inset-0 bg-background/50 pointer-events-none rounded;
+        mask-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHZpZXdCb3g9IjAgMCAxMCAxMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0iY3VycmVudENvbG9yIi8+Cjwvc3ZnPgo=");
+        background-image: linear-gradient(90deg, transparent, rgb(66, 66, 90) 0, rgb(66, 66, 90) 100%, transparent);
+        content: '';
+    }
+
+    .dropdown-menu {
+        @apply absolute right-0 mt-1.5 w-[999] rounded bg-background shadow z-10 border;
+    }
+
+    .dropdown-menu-item {
+        @apply flex items-center justify-between gap-1.5 w-full first-of-type:rounded-t last-of-type:rounded-b px-1.5 py-1.5 text-left text-sm hover:bg-sidebar/40 focus:bg-sidebar/40;
+    }
+
+    .dropdown-menu-item-danger {
+        @apply text-error hover:bg-error/30 focus:bg-error/30;
+    }
+
+    .dropdown-menu-item > div > svg {
+        @apply w-3 h-3;
+    }
+
+}
+
+@layer base {
+
+    * {
+        @apply border-border focus-visible:outline-none;
+        scrollbar-width: thin;
+        scrollbar-color: oklch(var(--border)) transparent;
+    }
+
+
+    body {
+        @apply bg-background text-foreground font-sans text-base;
+    }
+
+    h1 {
+        @apply text-4xl font-bold tracking-tight;
+    }
+
+    h2 {
+        @apply text-3xl font-bold tracking-tight;
+    }
+
+    h3 {
+        @apply text-2xl font-bold tracking-tight;
+    }
+
+    h4 {
+        @apply text-xl font-bold;
+    }
+
+    h5 {
+        @apply text-lg font-bold;
+    }
+
+    h6 {
+        @apply text-base font-bold;
+    }
+
+    ::selection {
+        @apply bg-success/20 text-foreground;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+}
