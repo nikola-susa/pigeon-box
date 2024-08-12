@@ -5,11 +5,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/a-h/templ"
-	"github.com/nikola-susa/secret-chat/crypt"
-	"github.com/nikola-susa/secret-chat/htmx"
-	"github.com/nikola-susa/secret-chat/model"
-	"github.com/nikola-susa/secret-chat/storage"
-	"github.com/nikola-susa/secret-chat/templates"
+	"github.com/nikola-susa/pigeon-box/crypt"
+	"github.com/nikola-susa/pigeon-box/htmx"
+	"github.com/nikola-susa/pigeon-box/model"
+	"github.com/nikola-susa/pigeon-box/storage"
+	"github.com/nikola-susa/pigeon-box/templates"
 	"log"
 	"net/http"
 	"strconv"
@@ -59,10 +59,25 @@ func (a *App) HandleCreateFileMessage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		thread, err := a.Store.GetThread(threadId)
+		if err != nil {
+			log.Printf("Error getting thread by id: %s", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if thread == nil {
+			log.Printf("Error thread not found: %d", threadId)
+			http.Error(w, "thread not found", http.StatusNotFound)
+			return
+		}
+
+		threadKey, err := crypt.Decrypt(a.Config.Crypt.Passphrase, []byte(thread.Key))
+
 		byt := buf.Bytes()
 		fn := fmt.Sprintf("%d-%s", time.Now().Unix(), fh.Filename)
 
-		eByt, err := crypt.Encrypt(a.Config.Crypt.Passphrase, byt)
+		eByt, err := crypt.Encrypt(string(threadKey), byt)
 		if err != nil {
 			log.Printf("Error encrypting file: %s", err)
 			htmx.ErrorToast(w, fmt.Sprintf("Error encrypting file: %s", err))
@@ -97,8 +112,6 @@ func (a *App) HandleCreateFileMessage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		fmt.Println(id)
-
 		m := model.CreateMessageParams{
 			UserID:   userId,
 			ThreadID: threadId,
@@ -121,6 +134,16 @@ func (a *App) HandleCreateFileMessage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		if thread.MessagesExpiresAt != nil {
+			expiration := time.Now().Add(*thread.MessagesExpiresAt)
+			err = a.Store.SetMessageExpiresAt(*id, expiration)
+			if err != nil {
+				log.Printf("Error setting message expiration: %s", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
 		user, err := a.Store.GetUser(userId)
 		if err != nil {
 			log.Printf("Error getting user by slack id: %s", err)
@@ -138,10 +161,11 @@ func (a *App) HandleCreateFileMessage(w http.ResponseWriter, r *http.Request) {
 		hashedMessageId, err := crypt.HashIDEncodeInt(*id, a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
 
 		messageRender := model.RenderMessage{
-			ID:        hashedMessageId,
-			ThreadID:  r.PathValue("thread_id"),
-			Text:      "",
-			CreatedAt: time.Now().Format("2006-01-02 15:04:05"),
+			ID:                 hashedMessageId,
+			ThreadID:           r.PathValue("thread_id"),
+			Text:               "",
+			CreatedAt:          time.Now().Format("2006-01-02 15:04:05"),
+			CreatedAtFormatted: time.Now().Format("15:04:05"),
 			User: model.RenderUser{
 				ID:       strconv.Itoa(*user.ID),
 				Name:     *user.Name,
@@ -150,11 +174,12 @@ func (a *App) HandleCreateFileMessage(w http.ResponseWriter, r *http.Request) {
 			},
 			Time: time.Now().Format("2006-01-02 15:04:05"),
 			File: model.RenderFile{
-				ID:          hashedFileId,
-				Name:        nf.Name,
-				Size:        storage.StringSize(*nf.Size),
-				ContentType: contentType,
-				ThreadHash:  r.PathValue("thread_id"),
+				ID:            hashedFileId,
+				Name:          nf.Name,
+				Size:          storage.StringSize(*nf.Size),
+				ContentType:   contentType,
+				ThreadHash:    r.PathValue("thread_id"),
+				ShouldPreview: storage.IsPreview(nf),
 			},
 			IsAuthor: userId == m.UserID,
 		}
@@ -166,7 +191,8 @@ func (a *App) HandleCreateFileMessage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		a.Event.Broadcast(r.PathValue("thread_id"), []byte(htmlString))
+		eventName := "created:" + r.PathValue("thread_id")
+		a.Event.Broadcast(r.PathValue("thread_id"), []byte(htmlString), &eventName, nil, nil)
 
 		_ = f.Close()
 
@@ -175,6 +201,7 @@ func (a *App) HandleCreateFileMessage(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) HandleDownloadFile(w http.ResponseWriter, r *http.Request) {
 
+	download := r.URL.Query().Get("download") == "true"
 	fileId, err := crypt.HashIDDecodeInt(r.PathValue("id"), a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
 
 	file, err := a.Store.GetFile(fileId)
@@ -192,7 +219,23 @@ func (a *App) HandleDownloadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dByt, err := a.Storage.Get(*file.Path, &a.Config.Crypt.Passphrase)
+	thread, err := a.Store.GetThread(*file.ThreadID)
+	if err != nil {
+		log.Printf("Error getting thread by id: %s", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if thread == nil {
+		log.Printf("Error thread not found: %d", file.ThreadID)
+		http.Error(w, "thread not found", http.StatusNotFound)
+		return
+	}
+
+	threadKey, err := crypt.Decrypt(a.Config.Crypt.Passphrase, []byte(thread.Key))
+	threadKeyStr := string(threadKey)
+
+	dByt, err := a.Storage.Get(*file.Path, &threadKeyStr)
 	if err != nil {
 		log.Printf("Error downloading file: %s", err)
 		htmx.ErrorToast(w, fmt.Sprintf("Error downloading file: %s", err))
@@ -200,7 +243,12 @@ func (a *App) HandleDownloadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", file.Name))
+	if download {
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", file.Name))
+	} else {
+		w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=%s", file.Name))
+	}
+
 	w.Header().Set("Content-Type", *file.ContentType)
 	w.Header().Set("Content-Length", strconv.Itoa(len(dByt)))
 

@@ -2,7 +2,7 @@ package templates
 
 import (
     "encoding/json"
-	"github.com/nikola-susa/secret-chat/model"
+	"github.com/nikola-susa/pigeon-box/model"
 )
 
 func renderMarkdown(html string) string {
@@ -13,84 +13,177 @@ func renderMarkdown(html string) string {
     return string(bytes)
 }
 
-templ EditMessage(message model.RenderMessage) {
-    <li tabindex="0" x-data="singleChat()" x-init="init()"
-        id={ "m-" + message.ID }
-        @mouseenter="onHoverIn()"
-        @mouseleave="onHoverOut()"
-        @focusin="onFocusIn()"
-        @focusout="onFocusOut()"
-        class="chat-item flex gap-3 items-start justify-start hover:bg-sidebar/20 p-3 relative focus:bg-sidebar/20 ring-inset focus:ring-primary/20 focus:ring-1 focus-within:bg-sidebar/20 focus-within:ring-1 focus-within:ring-primary/20">
+templ CreateMessageForm(id string) {
+    <div x-data="Editor" x-init="init(false, true)" class="relative">
+        <form
+            hx-post={ "/t/" + id + "/m" }
+            hx-swap="innerHTML"
+            hx-target="#chat-form"
+            onkeydown="if(event.keyCode === 13 && !event.shiftKey) { event.preventDefault(); return false }"
+            hx-trigger="keyup[keyCode==13&&!shiftKey], click from:button[type=submit]"
+            hx-on::before-request="this.reset(); localStorage.removeItem('editorText');"
+            class="relative"
+        >
+            <div class="message-input-container py-3">
+                <div class=" mx-3 z-10 relative">
+                    <div class="flex flex-col w-full border rounded bg-alt focus-within:border-primary shadow">
+                        <div class="flex-1 relative">
+                            <label for="message">
+                                <span class="label hidden">Message chat</span>
+                                <textarea
+                                    x-ref="textarea"
+                                    tabindex="1"
+                                    id="message-input"
+                                    name="message"
+                                    x-model="value"
+                                    @input="handleInputEvent(); resize()"
+                                    rows="1"
+                                    title="Message chat"
+                                    placeholder="Message chat"
+                                    class="block w-full min-h-[30px] border-0 p-4 pb-11 bg-inherit resize-none placeholder:text-sidebar-foreground/50"></textarea>
+                            </label>
+                        </div>
+                    </div>
 
-        <div class="grow-0 mt-[1px]">
-            <div class="w-5 h-5 rounded shadow bg-sidebar relative">
-                <img src={ message.User.Avatar } class="absolute inset-0 rounded flex justify-center items-center text-sm text-primary" alt={ message.User.Username }/>
-             </div>
-        </div>
-        <div class="grow flex flex-col gap-1.5 overflow-x-auto">
-            <div class="flex gap-3 items-center">
-                <div class="text-md font-bold text-foreground">{ message.User.Name }</div>
-                <div class="text-alt-foreground font-mono text-sm relative">{ message.Time }</div>
+                    <button tabindex="2" type="submit" class="button button-success p-1.5 shadow absolute bottom-2 right-2" x-bind:disabled="value.trim() === ''" title="Submit message">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" class="w-4 h-4" fill="currentColor">
+                            <path d="M1.5 2.25a.755.755 0 0 1 1-.71l15.596 7.808a.73.73 0 0 1 0 1.305L2.5 18.462l-.076.018a.75.75 0 0 1-.924-.728v-4.54c0-1.21.97-2.229 2.21-2.25l6.54-.17c.27-.01.75-.24.75-.79s-.5-.79-.75-.79l-6.54-.17A2.253 2.253 0 0 1 1.5 6.79z"></path>
+                        </svg>
+                    </button>
+                </div>
             </div>
-            <form
-                hx-patch={ "/t/" + message.ThreadID + "/m/" + message.ID }
-                hx-swap="none"
-                onkeydown="if(event.keyCode === 13 && !event.shiftKey) { event.preventDefault(); return false }"
-                hx-trigger="keyup[keyCode==13&&!shiftKey], click from:button[type=submit]"
-                hx-on::after-request="this.reset();"
-                class="relative"
-            >
-                @textareaRichEdit("Edit message", "message", message)
-            </form>
-        </div>
-    </li>
+        </form>
+
+        <button tabindex="3" @click="fileUpload()" @submit="fileUpload()" class="button button-basic bg-alt/50 backdrop-blur shadow p-1.5 absolute bottom-5 left-5 z-50" type="button" title="Upload a file">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" class="w-4 h-4" fill="currentColor"><path d="M12.212 3.02a1.753 1.753 0 0 0-2.478.003l-5.83 5.83a3.007 3.007 0 0 0-.88 2.127c0 .795.315 1.551.88 2.116.567.567 1.333.89 2.126.89.79 0 1.548-.321 2.116-.89l5.48-5.48a.75.75 0 0 1 1.061 1.06l-5.48 5.48a4.492 4.492 0 0 1-3.177 1.33c-1.2 0-2.345-.487-3.187-1.33a4.483 4.483 0 0 1-1.32-3.177c0-1.195.475-2.341 1.32-3.186l5.83-5.83a3.25 3.25 0 0 1 5.553 2.297c0 .863-.343 1.691-.953 2.301L7.439 12.39c-.375.377-.884.59-1.416.593a1.998 1.998 0 0 1-1.412-.593 1.992 1.992 0 0 1 0-2.828l5.48-5.48a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-5.48 5.48a.492.492 0 0 0 0 .707.499.499 0 0 0 .352.154.51.51 0 0 0 .356-.154l5.833-5.827a1.755 1.755 0 0 0 0-2.481Z"></path></svg>
+        </button>
+    </div>
+}
+
+templ EditMessageForm(message model.RenderMessage) {
+    <div x-data="Editor" x-init="init(true, false);" class="relative">
+        <form
+            hx-patch={ "/t/" + message.ThreadID + "/m/" + message.ID }
+            hx-swap="innerHTML"
+            hx-target="#chat-form"
+            onkeydown="if(event.keyCode === 13 && !event.shiftKey) { event.preventDefault(); return false }"
+            hx-trigger="keyup[keyCode==13&&!shiftKey], click from:button[type=submit]"
+            class="relative"
+        >
+            <div class="message-input-container py-3">
+                <div class="relative rounded-t bg-primary text-background text-sm mx-3 py-0.5 px-1 flex gap-1.5 items-center justify-between z-50">
+                    <div class="flex gap-1.5 items-center ml-0.5">
+                        <span>Editing a message</span>
+                        <span @click="scrollToMessage($el)" data-message-id={ message.ID }  class="text-xs rounded bg-background/20 hover:bg-background/30 p-0.5 cursor-pointer">#{ message.ID }</span>
+                    </div>
+                    <button tabindex="1" type="button"
+                        class="mr-0.5 flex gap-1.5 items-center"
+                        title="Cancel editing (esc)"
+                        hx-post={ "/t/" + message.ThreadID + "/m/" + message.ID + "/cancel" }
+                        hx-swap="innerHTML"
+                        hx-target="#chat-form"
+                        hx-trigger="click, submit, keyup-escape from:body">
+                            <span>Cancel</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" class="w-3 h-3" fill="currentColor"><path d="M2.22 2.22a.749.749 0 0 1 1.06 0L6 4.939 8.72 2.22a.749.749 0 1 1 1.06 1.06L7.061 6 9.78 8.72a.749.749 0 1 1-1.06 1.06L6 7.061 3.28 9.78a.749.749 0 1 1-1.06-1.06L4.939 6 2.22 3.28a.749.749 0 0 1 0-1.06Z"></path></svg>
+                    </button>
+                </div>
+                <div class="mx-3 z-10 relative">
+                    <div class="flex flex-col w-full border border-primary rounded-b bg-alt focus-within:border-primary shadow">
+                        <div class="flex-1 relative">
+                            <label for="message">
+                                <span class="label hidden">Message chat</span>
+                                <textarea
+                                    x-ref="textarea"
+                                    tabindex="1"
+                                    id="message-input"
+                                    name="message"
+                                    x-model="value"
+                                    @input="handleInputEvent(); resize()"
+                                    rows="1"
+                                    data-message-id={ message.ID }
+                                    title="Message chat"
+                                    placeholder="Message chat"
+                                    class="block w-full min-h-[30px] border-0 p-4 pb-11 bg-inherit resize-none placeholder:text-sidebar-foreground/50">{ message.Text }</textarea>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button tabindex="2" type="submit" class="button button-success p-1.5 shadow absolute bottom-2 right-2" x-bind:disabled="value.trim() === ''" title="Save message">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"  class="w-4 h-4" fill="currentColor"><path d="M11.013 1.427a1.75 1.75 0 0 1 2.474 0l1.086 1.086a1.75 1.75 0 0 1 0 2.474l-8.61 8.61c-.21.21-.47.364-.756.445l-3.251.93a.75.75 0 0 1-.927-.928l.929-3.25c.081-.286.235-.547.445-.758l8.61-8.61Zm.176 4.823L9.75 4.81l-6.286 6.287a.253.253 0 0 0-.064.108l-.558 1.953 1.953-.558a.253.253 0 0 0 .108-.064Zm1.238-3.763a.25.25 0 0 0-.354 0L10.811 3.75l1.439 1.44 1.263-1.263a.25.25 0 0 0 0-.354Z"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+}
+
+templ ChatList(messages []model.RenderMessage, lastMessageID string, id string) {
+    for _, message := range messages {
+        @ChatBubble(message)
+    }
+    if len(messages) > 0 {
+        <li  class="relative">
+            <div class="absolute top-[950px] z-50 left-7"  hx-swap="outerHTML" hx-get={ "/t/" + id + "/m?last_id=" + lastMessageID } hx-trigger="intersect once" hx-target="closest li">
+            </div>
+        </li>
+    }
 }
 
 templ ChatBubble(message model.RenderMessage) {
-    <li tabindex="0" x-data="singleChat()" x-init="init()"
+    <li tabindex="0"
+        x-data="singleChat()"
+        x-init="init()"
         id={ "m-" + message.ID }
         @mouseenter="onHoverIn()"
         @mouseleave="onHoverOut()"
         @focusin="onFocusIn()"
         @focusout="onFocusOut()"
         @keydown="handleKeydown($event, $el)"
-        class="chat-item flex gap-3 items-start justify-start hover:bg-sidebar/20 p-3 relative focus:bg-sidebar/20 ring-inset focus:ring-primary/20 focus:ring-1 focus-within:bg-sidebar/20 focus-within:ring-1 focus-within:ring-primary/20">
+        hx-get={ "/t/" + message.ThreadID + "/m/" + message.ID + "/render" }
+        hx-swap="outerHTML"
+        hx-trigger={ "MessageUpdated" + message.ID + " from:body" }
+        class={ "chat-item flex gap-3 items-start justify-start hover:bg-sidebar/20 p-3 relative focus:bg-sidebar/20 ring-inset focus:ring-primary/20 focus:ring-1 focus-within:bg-sidebar/20 focus-within:ring-1 focus-within:ring-primary/20" }>
 
         <div class="grow-0 mt-[1px]">
             <div class="w-5 h-5 rounded shadow bg-sidebar relative">
-                <img src={ message.User.Avatar } class="absolute inset-0 rounded flex justify-center items-center text-sm text-primary" alt={ message.User.Username }/>
+                <img src={ message.User.Avatar } class="absolute inset-0 rounded flex justify-center items-center text-sm text-primary" alt={ message.User.Username } loading="lazy"/>
              </div>
         </div>
         <div class="grow flex flex-col gap-1.5 overflow-x-auto">
-            <div class="flex gap-3 items-center">
-                <div class="text-md font-bold text-foreground">{ message.User.Name }</div>
-                <div class="text-alt-foreground font-mono text-sm relative">{ message.Time }</div>
+            <div class="flex gap-3 items-center justify-between">
+                <div class="flex gap-3 items-center">
+                    <div class="text-md font-bold text-foreground">{ message.User.Name }</div>
+                    <div class="flex gap-0.5 items-center text-alt-foreground font-mono text-sm ">
+                        <div>{ message.CreatedAtFormatted }</div>
+                        if message.UpdatedAtFormatted != "" {
+                            <div>&middot;</div>
+                            <div>{ message.UpdatedAtFormatted }</div>
+                        }
+                    </div>
+                </div>
+
+                <div class="text-xs text-primary/10 mr-7">
+                </div>
             </div>
             if message.Text != "" {
-                <div x-data={ renderMarkdown(message.Text) } class="flex flex-col gap-0.5 py-0.5 chat" x-html="renderChat(content)"></div>
+                <div class="flex flex-col gap-0.5 py-0.5 chat">
+                    @templ.Raw(message.Text)
+                </div>
             }
             if message.File.ID != "" {
                 <div class="flex flex-col gap-0.5 py-0.5 chat">
-                    <div class="text-alt-foreground text-sm flex gap-1.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" class="w-3" fill="currentColor"><path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14Z"></path><path d="M7.25 7.689V2a.75.75 0 0 1 1.5 0v5.689l1.97-1.969a.749.749 0 1 1 1.06 1.06l-3.25 3.25a.749.749 0 0 1-1.06 0L4.22 6.78a.749.749 0 1 1 1.06-1.06l1.97 1.969Z"></path></svg>
-                        <span>{ message.File.Name }</span>
+                    <div class="text-alt-foreground text-sm flex gap-1.5" >
+                        <a href={ templ.URL("/t/" + message.File.ThreadHash + "/f/" + message.File.ID + "/" + message.File.Name  + "?download=true") } target="_blank"  tabindex="0" class="hover:text-primary focus:text-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" class="w-3" fill="currentColor"><path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14Z"></path><path d="M7.25 7.689V2a.75.75 0 0 1 1.5 0v5.689l1.97-1.969a.749.749 0 1 1 1.06 1.06l-3.25 3.25a.749.749 0 0 1-1.06 0L4.22 6.78a.749.749 0 1 1 1.06-1.06l1.97 1.969Z"></path></svg>
+                        </a>
+                        <span class="truncate">{ message.File.Name }</span>
                     </div>
-                    @singleFileInput(message.File)
+
+                    @filePreview(message.File)
                 </div>
             }
         </div>
         @ChatBubbleMenu(message)
-    </li>
-}
-
-templ ChatBubbleLayout() {
-    <li tabindex="0" x-data="singleChat()" x-init="init()"
-        @mouseenter="onHoverIn()"
-        @mouseleave="onHoverOut()"
-        @focusin="onFocusIn()"
-        @focusout="onFocusOut()"
-        class="chat-item flex gap-3 items-start justify-start hover:bg-sidebar/20 p-3 relative focus:bg-sidebar/20 ring-inset focus:ring-primary/20 focus:ring-1 focus-within:bg-sidebar/20 focus-within:ring-1 focus-within:ring-primary/20">
-        {children...}
     </li>
 }
 
@@ -123,30 +216,28 @@ templ ChatBubbleMenu(message model.RenderMessage) {
                     x-on:click.outside="closeMenu($refs.menu)"
                     :id="$id('menu-item')"
                     style="display: none;"
-                    class="dropdown-menu w-[100px]"
+                    class="dropdown-menu w-56"
                     x-anchor="$refs.menu"
                     role="tooltip">
-                    if message.Text != "" {
-                        <button
-                            tabindex="0"
-                            type="button"
-                            x-data={ renderMarkdown(message.Text) }
-                            @click="copyPlainTextClipboard(content)"
-                            class="dropdown-menu-item" tabindex="0">
-                                <div class="flex items-center gap-1.5 grow">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path></svg>
-                                    <span>Copy</span>
-                                </div>
-                                <div>
-                                    <kbd class="text-sm text-alt-foreground">C</kbd>
-                                </div>
-                        </button>
-                    }
 
                     if message.File.ID != "" {
                         <a
-                            href={ templ.URL("/t/" + message.ThreadID + "/f/" + message.File.ID) }
+                            href={ templ.URL("/t/" + message.ThreadID + "/f/" + message.File.ID + "/" + message.File.Name) }
                             tabindex="0"
+                            target="_blank"
+                            class="dropdown-menu-item" tabindex="0">
+                                <div class="flex items-center gap-1.5 grow">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" class="w-3" fill="currentColor"><path d="M3.25 4a.25.25 0 0 0-.25.25v9a.75.75 0 0 1-.75.75H.75a.75.75 0 0 1 0-1.5h.75V4.25c0-.966.784-1.75 1.75-1.75h9.5c.966 0 1.75.784 1.75 1.75v8.25h.75a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1-.75-.75v-9a.25.25 0 0 0-.25-.25h-9.5Z"></path><path d="m7.97 7.97-2.75 2.75a.75.75 0 1 0 1.06 1.06l2.75-2.75 1.543 1.543a.25.25 0 0 0 .427-.177V6.25a.25.25 0 0 0-.25-.25H6.604a.25.25 0 0 0-.177.427L7.97 7.97Z"></path></svg>
+                                    <span>View in browser</span>
+                                </div>
+                                <div>
+                                    <kbd class="text-sm text-alt-foreground"></kbd>
+                                </div>
+                        </a>
+                        <a
+                            href={ templ.URL("/t/" + message.ThreadID + "/f/" + message.File.ID + "/" + message.File.Name + "?download=true") }
+                            tabindex="0"
+                            target="_blank"
                             class="dropdown-menu-item" tabindex="0">
                                 <div class="flex items-center gap-1.5 grow">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" class="w-3" fill="currentColor"><path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14Z"></path><path d="M7.25 7.689V2a.75.75 0 0 1 1.5 0v5.689l1.97-1.969a.749.749 0 1 1 1.06 1.06l-3.25 3.25a.749.749 0 0 1-1.06 0L4.22 6.78a.749.749 0 1 1 1.06-1.06l1.97 1.969Z"></path></svg>
@@ -163,8 +254,8 @@ templ ChatBubbleMenu(message model.RenderMessage) {
                             tabindex="0"
                             type="button"
                             hx-get={ "/t/" + message.ThreadID + "/m/" + message.ID + "/edit" }
-                            hx-swap="outerHTML"
-                            hx-target="closest li"
+                            hx-swap="innerHTML"
+                            hx-target="#chat-form"
                             hx-trigger="click, submit, keyup-edit from:closest li"
                             class="dropdown-menu-item" tabindex="0">
                                 <div class="flex items-center gap-1.5 grow">
@@ -182,7 +273,7 @@ templ ChatBubbleMenu(message model.RenderMessage) {
                             tabindex="0"
                             type="button"
                             hx-delete={ "/t/" + message.ThreadID + "/m/" + message.ID }
-                            hx-swap="delete" hx-target="closest li"
+                            hx-swap="none"
                             hx-trigger="click, submit, keyup-delete from:closest li"
                             class="dropdown-menu-item dropdown-menu-item-danger">
                                 <div class="flex items-center gap-1.5 grow">
@@ -198,4 +289,68 @@ templ ChatBubbleMenu(message model.RenderMessage) {
             </div>
         </div>
     </div>
+}
+
+templ SlackDetails(channelName string, members string) {
+    if channelName != "" {
+        <hr class="my-3" />
+        <div class="text-alt-foreground text-md flex flex-col gap-1">
+            <span class="text-sm">Slack channel</span>
+            <span class="text-primary">#{ channelName }</span>
+        </div>
+    }
+    if len(members) > 0 {
+        <hr class="my-3" />
+        <div class="text-alt-foreground text-md flex flex-col gap-1">
+            <span class="text-sm">Slack group members</span>
+            <span class="text-foreground">{ members }</span>
+        </div>
+    }
+}
+
+
+templ filePreview(file model.RenderFile) {
+    <div class="flex p-0.5 my-2 gap-0.5 border rounded-md shadow md:w-[300px]">
+        @contentType(file)
+        <div class="flex flex-col grow gap-0.5 mx-1.5 !pb-1.5 !pt-1.5 overflow-hidden">
+            <div class="truncate">
+                {file.Name}
+            </div>
+            <div class="text-alt-foreground">
+                { file.Size }
+            </div>
+        </div>
+    </div>
+}
+
+templ contentType(file model.RenderFile) {
+    <a x-data="{ external: false }" @mouseenter="external = true" @mouseleave="external = false" @focus="external = true" @blur="external = false"
+        href={ templ.URL("/t/" + file.ThreadHash + "/f/" + file.ID + "/" + file.Name) } target="_blank" tabindex="0"
+        class="h-12 w-12 bg-primary/10 rounded-md shadow text-primary flex justify-center items-center shrink-0 my-0.5 hover:bg-primary/30 focus:bg-primary/30">
+
+        <div x-show="external">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" class="w-4" fill="currentColor"><path d="M3.75 2h3.5a.75.75 0 0 1 0 1.5h-3.5a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-3.5a.75.75 0 0 1 1.5 0v3.5A1.75 1.75 0 0 1 12.25 14h-8.5A1.75 1.75 0 0 1 2 12.25v-8.5C2 2.784 2.784 2 3.75 2Zm6.854-1h4.146a.25.25 0 0 1 .25.25v4.146a.25.25 0 0 1-.427.177L13.03 4.03 9.28 7.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.75-3.75-1.543-1.543A.25.25 0 0 1 10.604 1Z"></path></svg>
+        </div>
+
+        <div x-show="!external">
+            switch file.ContentType {
+                case "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.oasis.opendocument.text", "application/vnd.oasis.opendocument.text-template":
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2048 2048" class="w-4" fill="currentColor" focusable="false"><path d="M1920 1664h-128v384H128v-384H0V640h128V0h1243l421 421v219h128v1024zM1408 384h165l-165-165v165zM256 640h1408V512h-384V128H256v512zm1408 1024H256v256h1408v-256zm128-896H128v768h1664V768zM448 896q40 0 75 15t61 41 41 61 15 75q0 40-15 75t-41 61-61 41-75 15h-64v128H256V896h192zm0 256q26 0 45-19t19-45q0-26-19-45t-45-19h-64v128h64zm448-256q53 0 99 20t82 55 55 81 20 100q0 53-20 99t-55 82-81 55-100 20H768V896h128zm0 384q27 0 50-10t40-27 28-41 10-50q0-27-10-50t-27-40-41-28-50-10v256zm384-384h320v128h-192v128h192v128h-192v128h-128V896z"></path></svg>
+                case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "text/csv", "application/vnd.ms-excel", "application/vnd.oasis.opendocument.spreadsheet", "application/vnd.oasis.opendocument.spreadsheet-template":
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2048 2048" class="w-4" fill="currentColor"><path d="M1920 0q26 0 49 10t41 27 28 41 10 50v1792q0 26-10 49t-27 41-41 28-50 10H512q-26 0-49-10t-41-27-28-41-10-50v-256H128q-26 0-49-10t-41-27-28-41-10-50V512q0-26 10-49t27-41 41-28 50-10h256V128q0-26 10-49t27-41 41-28 50-10h1408zM496 1440l146-267 143 267h255l-259-419 253-413H790L650 863 521 608H262l246 414-270 418h258zm656 480v-256H512v256h640zm0-1536V128H512v256h640zm768 1536v-384h-640v384h640zm0-512v-384h-640v384h640zm0-512V512h-640v384h640zm0-512V128h-640v256h640z"></path></svg>
+                case "application/vnd.ms-powerpoint", "application/vnd.openxmlformats-officedocument.presentationml.presentation", "application/vnd.oasis.opendocument.presentation", "application/vnd.oasis.opendocument.presentation-template":
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2048 2048" class="w-4" fill="currentColor"><path d="M658 987h-90V791h94q53 0 80 20t28 75q0 57-29 79t-83 22zM1024 0q141 0 272 36t244 104 207 160 161 207 103 245 37 272q0 141-36 272t-104 244-160 207-207 161-245 103-272 37q-117 0-229-26t-214-75-193-120-163-163h-97q-26 0-49-10t-41-27-28-41-10-50V512q0-26 10-49t27-41 41-28 50-10h97q73-91 163-162t192-121 215-75 229-26zm128 137v247q26 0 49 10t41 28 28 40 10 50v384h631q-21-147-87-276t-167-229-229-166-276-88zm-128-9q-177 0-338 66T398 384h626V128zM361 608v832h207v-272h106q66 0 122-19t98-57 66-90 24-122q0-70-22-121t-62-85-95-50-122-16H361zm663 1312q123 0 237-32t214-90 182-141 140-182 91-214 32-238h-640v513q0 26-10 49t-27 41-41 28-50 10H398q126 124 287 190t339 66z"></path></svg>
+                case "application/zip" , "application/x-rar-compressed" , "application/x-7z-compressed", "application/x-tar", "application/x-bzip", "application/x-bzip2", "application/x-gzip", "application/x-xz":
+                    <svg zxmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" class="w-4" fill="currentColor"><path d="M3.5 1.75v11.5c0 .09.048.173.126.217a.75.75 0 0 1-.752 1.298A1.748 1.748 0 0 1 2 13.25V1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.185 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v8.586A1.75 1.75 0 0 1 12.25 15h-.5a.75.75 0 0 1 0-1.5h.5a.25.25 0 0 0 .25-.25V4.664a.25.25 0 0 0-.073-.177L9.513 1.573a.25.25 0 0 0-.177-.073H7.25a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1 0-1.5h-3a.25.25 0 0 0-.25.25Zm3.75 8.75h.5c.966 0 1.75.784 1.75 1.75v3a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1-.75-.75v-3c0-.966.784-1.75 1.75-1.75ZM6 5.25a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 6 5.25Zm.75 2.25h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1 0-1.5ZM8 6.75A.75.75 0 0 1 8.75 6h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 8 6.75ZM8.75 3h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1 0-1.5ZM8 9.75A.75.75 0 0 1 8.75 9h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 8 9.75Zm-1 2.5v2.25h1v-2.25a.25.25 0 0 0-.25-.25h-.5a.25.25 0 0 0-.25.25Z"></path></svg>
+                case "image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml", "image/bmp", "image/tiff", "image/x-icon", "image/vnd.microsoft.icon":
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" class="w-4" fill="currentColor"><path d="M16 13.25A1.75 1.75 0 0 1 14.25 15H1.75A1.75 1.75 0 0 1 0 13.25V2.75C0 1.784.784 1 1.75 1h12.5c.966 0 1.75.784 1.75 1.75ZM1.75 2.5a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h.94l.03-.03 6.077-6.078a1.75 1.75 0 0 1 2.412-.06L14.5 10.31V2.75a.25.25 0 0 0-.25-.25Zm12.5 11a.25.25 0 0 0 .25-.25v-.917l-4.298-3.889a.25.25 0 0 0-.344.009L4.81 13.5ZM7 6a2 2 0 1 1-3.999.001A2 2 0 0 1 7 6ZM5.5 6a.5.5 0 1 0-1 0 .5.5 0 0 0 1 0Z"></path></svg>
+                case "application/octet-stream", "application/x-msdownload", "application/x-sh", "application/x-shellscript", "application/x-executable", "application/x-msdos-program":
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" class="w-4" fill="currentColor"><path d="M4 1.75C4 .784 4.784 0 5.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v8.586A1.75 1.75 0 0 1 14.25 15h-9a.75.75 0 0 1 0-1.5h9a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 10 4.25V1.5H5.75a.25.25 0 0 0-.25.25v2a.75.75 0 0 1-1.5 0Zm-4 6C0 6.784.784 6 1.75 6h1.5C4.216 6 5 6.784 5 7.75v2.5A1.75 1.75 0 0 1 3.25 12h-1.5A1.75 1.75 0 0 1 0 10.25ZM6.75 6h1.5a.75.75 0 0 1 .75.75v3.75h.75a.75.75 0 0 1 0 1.5h-3a.75.75 0 0 1 0-1.5h.75v-3h-.75a.75.75 0 0 1 0-1.5Zm-5 1.5a.25.25 0 0 0-.25.25v2.5c0 .138.112.25.25.25h1.5a.25.25 0 0 0 .25-.25v-2.5a.25.25 0 0 0-.25-.25Zm9.75-5.938V4.25c0 .138.112.25.25.25h2.688l-.011-.013-2.914-2.914-.013-.011Z"></path></svg>
+                case "application/json", "application/xml", "application/xhtml+xml", "application/rss+xml", "application/atom+xml", "application/soap+xml", "application/xslt+xml", "application/mathml+xml", "application/atomcat+xml", "application/atomsvc":
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" class="w-4" fill="currentColor"><path d="M4 1.75C4 .784 4.784 0 5.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v8.586A1.75 1.75 0 0 1 14.25 15h-9a.75.75 0 0 1 0-1.5h9a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 10 4.25V1.5H5.75a.25.25 0 0 0-.25.25v2.5a.75.75 0 0 1-1.5 0Zm1.72 4.97a.75.75 0 0 1 1.06 0l2 2a.75.75 0 0 1 0 1.06l-2 2a.749.749 0 0 1-1.275-.326.749.749 0 0 1 .215-.734l1.47-1.47-1.47-1.47a.75.75 0 0 1 0-1.06ZM3.28 7.78 1.81 9.25l1.47 1.47a.751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018l-2-2a.75.75 0 0 1 0-1.06l2-2a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Zm8.22-6.218V4.25c0 .138.112.25.25.25h2.688l-.011-.013-2.914-2.914-.013-.011Z"></path></svg>
+                default:
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" class="w-4" fill="currentColor"><path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 9 4.25V1.5Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-.011-.013-2.914-2.914-.013-.011Z"></path></svg>
+            }
+        </div>
+    </a>
 }

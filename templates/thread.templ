@@ -1,0 +1,199 @@
+package templates
+
+import (
+	"github.com/nikola-susa/pigeon-box/model"
+)
+
+templ Home(thread model.RenderThread, id string, user model.RenderUser) {
+    @BaseLayout(thread.Name) {
+        <div x-data="chatList()" x-init="init()" @keydown.window="handleKeydown($event)">
+            <div id="chat-container-wrap" class="message-box-container flex flex-col flex-1 h-dvh">
+                <main id="chat-container" class="message-box relative flex flex-col flex-1 grow border bg-background rounded-md shadow m-1.5 md:m-2 md:mb-8 min-h-[calc(100dvh - 12px)] max-h-[calc(100dvh - 12px)] md:min-h-[calc(100dvh - 40px)] md:max-h-[calc(100dvh - 40px)]">
+                    <div class="flex-1 flex flex-col justify-start">
+                        <div id="chat-title" class="border-b py-1.5 px-1 sticky top-0 backdrop-blur z-10 bg-gradient-to-b from-black to-background/70 rounded-t-md flex justify-between items-center gap-0.5">
+                            <div class="flex gap-1.5 items-center px-2">
+                                <div class="h-4 relative" x-data="{ open: false, timeout: null }" @mouseleave="timeout = setTimeout(() => { open = false }, 700)" @click="open = true; clearTimeout(timeout)">
+                                    <div x-ref="description"
+                                        class="flex items-center justify-center gap-1.5 text-foreground cursor-pointer hover:text-primary"
+                                        hx-get={ "/t/" + id + "/slack/info" } hx-trigger="click once, submit once" hx-target=".thread-details"
+                                        tabindex="0"
+                                    >
+                                        if thread.ExpiresAt != "" || thread.MessagesExpiresAt != "" {
+                                            <div x-ref="description" class="w-4 h-4 flex items-center justify-center text-primary cursor-pointer hover:text-primary">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M5.75.75A.75.75 0 0 1 6.5 0h3a.75.75 0 0 1 0 1.5h-.75v1l-.001.041a6.724 6.724 0 0 1 3.464 1.435l.007-.006.75-.75a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734l-.75.75-.006.007a6.75 6.75 0 1 1-10.548 0L2.72 5.03l-.75-.75a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l.75.75.007.006A6.72 6.72 0 0 1 7.25 2.541V1.5H6.5a.75.75 0 0 1-.75-.75ZM8 14.5a5.25 5.25 0 1 0-.001-10.501A5.25 5.25 0 0 0 8 14.5Zm.389-6.7 1.33-1.33a.75.75 0 1 1 1.061 1.06L9.45 8.861A1.503 1.503 0 0 1 8 10.75a1.499 1.499 0 1 1 .389-2.95Z"></path></svg>
+                                            </div>
+                                        } else {
+                                            <div x-ref="description" class="w-4 h-4 flex items-center justify-center text-foreground">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.749.749 0 1 1 1.06-1.06L8 8.939l3.72-3.719a.749.749 0 0 1 1.06 0Z"></path></svg>
+                                            </div>
+                                        }
+                                        <div class="text-md overflow-hidden max-w-16 font-bold truncate">
+                                            { thread.Name }
+                                        </div>
+                                    </div>
+                                    <div x-show="open" x-anchor.bottom-start="$refs.description" role="tooltip" @click.outside="open = false" class="relative z-[999] min-w-64 bg-black p-3 text-foreground border rounded-lg" style="display: none;">
+                                        <div class="flex flex-col gap-0.5 text-foreground">
+                                            <div class="text-sm pb-0.5 text-alt-foreground">Thread name</div>
+                                            <div class="text-md">{ thread.Name }</div>
+                                            <hr class="my-3"/>
+                                            <div class="text-sm pb-0.5 text-alt-foreground">Thread description</div>
+                                            <div class="text-md text-alt-foreground">{ *thread.Description }</div>
+                                        </div>
+                                        <div class="thread-details"></div>
+                                        if thread.ExpiresAt != "" || thread.MessagesExpiresAt != "" {
+                                            <hr class="my-3"/>
+                                            <div class="text-sm pb-1.5 text-alt-foreground">Thread expiration</div>
+                                            <div class="bg-primary/10 rounded p-3">
+                                                if thread.ExpiresAt != "" {
+                                                    <div class="text-primary text-md">If no new messages, <br/> this thread will be auto-deleted after:</div>
+                                                    <div class="pt-0.5 text-foreground text-base">{ thread.ExpiresAt }</div>
+                                                }
+                                                if thread.ExpiresAt != "" && thread.MessagesExpiresAt != "" {
+                                                    <hr class="my-1.5 border-primary/30"/>
+                                                }
+                                                if thread.MessagesExpiresAt != "" {
+                                                    <div class="text-primary text-md">Messages in this thread <br/> will be auto-deleted after:</div>
+                                                    <div class="pt-0.5 text-foreground text-base">{ thread.MessagesExpiresAt }</div>
+                                                }
+                                            </div>
+                                        }
+                                        if  thread.IsAuthor {
+                                            <hr class="my-3"/>
+                                            <div class="text-sm pb-1.5 text-alt-foreground">Danger zone</div>
+                                            <button
+                                                type="button"
+                                                hx-delete={ "/t/" + id }
+                                                hx-swap="none"
+                                                hx-trigger="click"
+                                                tabindex="0"
+                                                class="w-full bg-warning/10 hover:bg-warning/30 text-warning rounded py-1.5 px-3 shadow text-center text-md cursor-pointer"
+                                            >
+                                               Delete Thread
+                                            </button>
+                                            <div class="text-xss text-primary tracking-wider pt-1.5">All messages and files will be deleted. This is not reversible. There's no confirmation.</div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex items-center gap-3 px-0.5">
+                                    <div class="grow-0 mt-[1px]" x-data="{ open: false, timeout: null }" @mouseleave="timeout = setTimeout(() => { open = false }, 700)" @click="open = true; clearTimeout(timeout)">
+                                        <div class="w-5 h-5 rounded shadow bg-sidebar relative cursor-pointer"  x-ref="profile">
+                                            <img src={ user.Avatar } class="absolute inset-0 rounded flex justify-center items-center text-sm text-primary" alt={ user.Username } loading="lazy"/>
+                                        </div>
+                                         <div x-show="open" x-anchor.bottom-start="$refs.profile" role="tooltip" @click.outside="open = false" class="relative z-[999] min-w-48 bg-black p-3 text-foreground border rounded-lg" style="display: none;">
+                                            <div class="flex flex-col gap-0.5 text-foreground">
+                                                <div class="text-sm pb-0.5 text-alt-foreground">Name</div>
+                                                <div class="text-md">{ user.Name }</div>
+                                                <div class="text-sm text-alt-foreground">{ user.Username }</div>
+                                                <hr class="my-3"/>
+                                                <div class="text-sm pb-0.5 text-alt-foreground">Slack ID</div>
+                                                <div class="text-md text-alt-foreground">{ *user.SlackID }</div>
+                                            </div>
+                                           <hr class="my-3"/>
+                                            <div class="flex flex-col gap-0.5">
+                                               <div class="text-sm text-alt-foreground">Session</div>
+                                                <div class="flex flex-col gap-0.5">
+                                                     <button
+                                                         type="button"
+                                                         hx-delete={ "/t/" + id + "/auth" }
+                                                         hx-swap="none"
+                                                         hx-trigger="click"
+                                                         tabindex="0"
+                                                         class="hover:underline text-error text-left py-1.5 text-md cursor-pointer"
+                                                     >
+                                                        Kill this thread session
+                                                     </button>
+                                                </div>
+                                            </div>
+                                         </div>
+                                    </div>
+                                 </div>
+                            </div>
+
+                            <div class="loading-bar absolute bottom-0 left-0 right-0 h-[1px]"></div>
+                        </div>
+
+                        <ul id="chat-list"
+                            x-data="chatNavigation()"
+                            @keydown.window="handleKeydown($event)"
+                            x-ref="list"
+                            hx-ext="sse"
+                            sse-connect={ "/t/" + id + "/" + user.ID + "/e" }
+                            class="overflow-x-auto flex flex-col-reverse relative"
+                            x-on:htmx:after-settle="scrollToBottom()"
+                        >
+                            <div hx-swap="afterend" sse-swap={ "created:" + id }></div>
+                            <div hx-swap="none" sse-swap={ "edited:" + id }></div>
+                            <div hx-swap="none" sse-swap={ "deleted:" + id }></div>
+                            <div hx-swap="none" sse-swap={ "expired:" + id }></div>
+
+                            <div hx-get={ "/t/" + id + "/m" } hx-trigger="revealed" class="relative mx-1.5" hx-swap="outerHTML">
+                                @chatSkeli()
+                                @chatSkeli()
+                                @chatSkeli()
+                            </div>
+                        </ul>
+                    </div>
+
+                    <div id="chat-form">
+                        @CreateMessageForm(id)
+                    </div>
+
+                    <input
+                        type="file"
+                        id="files-input"
+                        name="files"
+                        class="file-input hidden"
+                        hidden
+                        hx-post={ "/t/" + id + "/f" }
+                        hx-trigger="change"
+                        hx-encoding="multipart/form-data"
+                        hx-swap="none"
+                    />
+                </main>
+            </div>
+
+            <footer class="absolute bottom-[7px] left-5 right-5 z-50 hidden md:block">
+                <div class="p-0.5 flex justify-between items-center gap-3 relative">
+                    <div class="flex justify-center items-center gap-1.5 bg-background relative rounded">
+                        <div class="w-3 h-3 text-alt-foreground/70">
+                            @logo()
+                        </div>
+                        <div class="text-xs text-alt-foreground/70 font-mono">
+                            Pigeon box v{ thread.Version }
+                        </div>
+                    </div>
+                    <div class="flex gap-3 items-center">
+                        <div class="text-xs text-alt-foreground/70 font-mono">
+                            <span hx-get={ "/t/" + id + "/slack/workspace" } hx-trigger="load"></span>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+
+	}
+}
+
+templ SlackWorkspace(name string) {
+    <div>Workspace <span class="text-primary">{ name }</span></div>
+}
+
+templ chatSkeli() {
+    <div class="rounded border shadow p-3 mx-1.5 mb-1.5">
+      <div class="animate-pulse flex space-x-3">
+        <div class="rounded bg-sidebar h-5 w-5"></div>
+        <div class="flex-1 space-y-3 py-1">
+          <div class="h-2 bg-alt rounded"></div>
+          <div class="space-y-3">
+            <div class="grid grid-cols-3 gap-4">
+              <div class="h-2 bg-alt rounded col-span-2"></div>
+              <div class="h-2 bg-alt rounded col-span-1"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+}

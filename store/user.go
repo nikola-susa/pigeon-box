@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/nikola-susa/secret-chat/model"
+	"github.com/nikola-susa/pigeon-box/model"
 )
 
 func (s *Store) CreateUser(user model.User) (*int, error) {

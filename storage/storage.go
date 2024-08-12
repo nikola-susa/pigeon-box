@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"github.com/nikola-susa/secret-chat/config"
+	"github.com/nikola-susa/pigeon-box/config"
 )
 
 type Storage interface {

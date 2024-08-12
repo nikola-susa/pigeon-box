@@ -11,10 +11,12 @@ import (
 
 type Event struct {
 	Data      []byte
+	Name      string
 	Timestamp time.Time
 }
 
 type Subscriber struct {
+	UserID string
 	Events chan *Event
 }
 
@@ -77,9 +79,10 @@ func (s *Server) GetStream(name string) *Stream {
 	return stream
 }
 
-func NewSubscriber() *Subscriber {
+func NewSubscriber(userId string) *Subscriber {
 	return &Subscriber{
 		Events: make(chan *Event),
+		UserID: userId,
 	}
 }
 
@@ -130,7 +133,7 @@ func (s *Stream) getSubCount() int32 {
 	return atomic.LoadInt32(&s.SubCount)
 }
 
-func (s *Server) Broadcast(streamName string, data []byte) {
+func (s *Server) Broadcast(streamName string, data []byte, eventName *string, userID *string, excludeUser *bool) {
 
 	stream := s.GetStream(streamName)
 	if stream == nil {
@@ -148,10 +151,50 @@ func (s *Server) Broadcast(streamName string, data []byte) {
 	}
 
 	event := &Event{
+		Name:      streamName,
 		Data:      eventData,
 		Timestamp: time.Now(),
 	}
-	stream.Events <- event
+
+	if eventName != nil {
+		event.Name = *eventName
+	}
+
+	if userID != nil {
+		if excludeUser != nil && *excludeUser {
+			// Send to all subscribers except the user
+			for _, sub := range stream.Subscribers {
+				if sub.UserID != *userID {
+					sub.Events <- event
+				}
+			}
+			return
+		} else {
+			// Send to only the user
+			for _, sub := range stream.Subscribers {
+				if sub.UserID == *userID {
+					sub.Events <- event
+				}
+			}
+			return
+		}
+	} else {
+		// Send to all subscribers
+		stream.Events <- event
+	}
+}
+
+func (s *Server) PresentUsers(streamName string) []string {
+	stream := s.GetStream(streamName)
+	if stream == nil {
+		return nil
+	}
+
+	users := make([]string, 0)
+	for _, sub := range stream.Subscribers {
+		users = append(users, sub.UserID)
+	}
+	return users
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -161,13 +204,18 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stream := s.GetStream(streamName)
+	userID := r.PathValue("user")
+	if userID == "" {
+		http.Error(w, "user query parameter is required", http.StatusBadRequest)
+		return
+	}
 
+	stream := s.GetStream(streamName)
 	if stream == nil {
 		s.AddStream(streamName)
 	}
 
-	sub := NewSubscriber()
+	sub := NewSubscriber(userID)
 	stream.subscribe(sub)
 
 	defer stream.unsubscribe(sub)
@@ -181,11 +229,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		<-r.Context().Done()
 		stream.unsubscribe(sub)
-
 		if stream.getSubCount() == 0 {
 			s.RemoveStream(streamName)
 		}
-
 	}()
 
 	w.Header().Set("Content-Type", "text/event-stream")
@@ -193,7 +239,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Connection", "keep-alive")
 
 	for event := range sub.Events {
-		_, err := fmt.Fprintf(w, "event: %s\n%s\n\n", streamName, event.Data)
+		eventName := event.Name
+		if eventName == "" {
+			eventName = streamName
+		}
+
+		_, err := fmt.Fprintf(w, "event: %s\n%s\n\n", eventName, event.Data)
 		if err != nil {
 			fmt.Println("Error writing to stream", err)
 			return

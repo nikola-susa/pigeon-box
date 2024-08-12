@@ -2,13 +2,21 @@ package app
 
 import (
 	"fmt"
-	"github.com/nikola-susa/secret-chat/crypt"
+	"github.com/nikola-susa/pigeon-box/crypt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
 func (a *App) HandleAuth(w http.ResponseWriter, r *http.Request) {
+
+	userAgent := r.Header.Get("User-Agent")
+	if strings.Contains(userAgent, "Slackbot") {
+		http.Error(w, "Request ignored", http.StatusForbidden)
+		return
+	}
+
 	threadId, err := crypt.HashIDDecodeInt(r.PathValue("thread_id"), a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
 	if err != nil {
 		log.Printf("Error parsing thread id: %s", err)
@@ -20,7 +28,6 @@ func (a *App) HandleAuth(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Error decoding session token: %s", err)
 		RenderError(w)
-		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -28,14 +35,12 @@ func (a *App) HandleAuth(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Error getting session by token: %s", err)
 		RenderError(w)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if session == nil {
 		log.Printf("Error session not found: %s", sessionToken)
 		RenderError(w)
-		http.Error(w, "session not found", http.StatusNotFound)
 		return
 	}
 
@@ -53,7 +58,7 @@ func (a *App) HandleAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = a.Store.UpdateSessionExpiresAt(session.ID, time.Now().Add(24*time.Hour).Unix())
+	err = a.Store.UpdateSessionExpiresAt(session.ID, time.Now().Add(24*time.Hour))
 	if err != nil {
 		RenderError(w)
 		return
@@ -92,10 +97,12 @@ func (a *App) HandleAuth(w http.ResponseWriter, r *http.Request) {
 	hashedThreadID, err := crypt.HashIDEncodeInt(threadId, a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
 
 	http.SetCookie(w, &http.Cookie{
-		Name:    "session_token",
-		Value:   r.PathValue("session_token"),
-		Expires: time.Now().Add(24 * time.Hour),
-		Path:    fmt.Sprintf("/t/%s", hashedThreadID),
+		Name:     "session_token",
+		Value:    r.PathValue("session_token"),
+		Expires:  time.Now().Add(24 * time.Hour),
+		Path:     fmt.Sprintf("/t/%s", hashedThreadID),
+		SameSite: http.SameSiteNoneMode,
+		Secure:   true,
 	})
 
 	redirectURL := fmt.Sprintf("/t/%s", hashedThreadID)
@@ -115,13 +122,13 @@ func (a *App) HandleDeleteSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Name:    "session_token",
-		Value:   "",
-		Expires: time.Now().Add(-24 * time.Hour),
-		Path:    fmt.Sprintf("/t/%s", r.PathValue("thread_id")),
+		Name:     "session_token",
+		Value:    "",
+		Expires:  time.Now().Add(-24 * time.Hour),
+		Path:     fmt.Sprintf("/t/%s", r.PathValue("thread_id")),
+		SameSite: http.SameSiteStrictMode,
 	})
 
-	w.Header().Set("HX-Redirect", "/not-authenticated")
-
-	w.WriteHeader(http.StatusOK)
+	HTMXRedirect(w, r, "/not-authenticated")
+	return
 }

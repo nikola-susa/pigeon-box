@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/nikola-susa/secret-chat/config"
+	"github.com/nikola-susa/pigeon-box/config"
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
 )
 
@@ -17,6 +17,11 @@ type Store struct {
 func New(config *config.Config) (*Store, error) {
 
 	dbx, err := sqlx.Connect("libsql", config.Database.URL)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = dbx.Exec("PRAGMA foreign_keys = ON;")
 	if err != nil {
 		return nil, err
 	}

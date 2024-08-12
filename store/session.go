@@ -4,8 +4,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/nikola-susa/secret-chat/model"
+	"github.com/nikola-susa/pigeon-box/model"
 	"golang.org/x/net/context"
+	"time"
 )
 
 func (s *Store) CreateSession(session model.Session) (*int, error) {
@@ -66,7 +67,7 @@ func (s *Store) DeleteSessionByUserID(userID int) error {
 	return nil
 }
 
-func (s *Store) UpdateSessionExpiresAt(id int, expiresAt int64) error {
+func (s *Store) UpdateSessionExpiresAt(id int, expiresAt time.Time) error {
 	_, err := s.db.Exec(`UPDATE session SET expires_at = $1 WHERE id = $2`, expiresAt, id)
 	if err != nil {
 		return fmt.Errorf("update session expires_at: %w", err)
@@ -75,7 +76,7 @@ func (s *Store) UpdateSessionExpiresAt(id int, expiresAt int64) error {
 }
 
 func (s *Store) DeleteExpiredSessions() error {
-	_, err := s.db.Exec(`DELETE FROM session WHERE expires_at < NOW()`)
+	_, err := s.db.Exec(`DELETE FROM session WHERE expires_at < DATETIME('now')`)
 	if err != nil {
 		return fmt.Errorf("delete expired sessions: %w", err)
 	}

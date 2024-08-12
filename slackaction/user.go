@@ -1,6 +1,6 @@
 package slackaction
 
-import "github.com/nikola-susa/secret-chat/model"
+import "github.com/nikola-susa/pigeon-box/model"
 
 func (s *SlackAction) GetOrCreateUser(slackID string) (*int, error) {
 	user, _ := s.Store.GetUserBySlackID(slackID)

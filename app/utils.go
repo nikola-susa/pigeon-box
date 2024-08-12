@@ -2,7 +2,7 @@ package app
 
 import (
 	"encoding/json"
-	"github.com/nikola-susa/secret-chat/templates"
+	"github.com/nikola-susa/pigeon-box/templates"
 	"golang.org/x/net/context"
 	"net/http"
 )
@@ -37,5 +37,13 @@ func RenderError(w http.ResponseWriter) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+}
+
+func HTMXRedirect(w http.ResponseWriter, r *http.Request, url string) {
+	if r.Header.Get("HX-Request") != "" {
+		w.Header().Set("HX-Redirect", url)
+	} else {
+		http.Redirect(w, r, url, http.StatusSeeOther)
 	}
 }

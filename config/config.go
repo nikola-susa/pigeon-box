@@ -8,7 +8,8 @@ import (
 )
 
 type Config struct {
-	Public struct {
+	Version string `envconfig:"VERSION" default:"0.1"`
+	Public  struct {
 		URL string `envconfig:"PUBLIC_URL" default:"http://localhost:8081"`
 	}
 	Server struct {

@@ -12,9 +12,10 @@ type File struct {
 }
 
 type RenderFile struct {
-	ID          string `json:"id,omitempty"`
-	Name        string `json:"name,omitempty"`
-	Size        string `json:"size,omitempty"`
-	ContentType string `json:"content_type,omitempty"`
-	ThreadHash  string `json:"thread_hash,omitempty"`
+	ID            string `json:"id,omitempty"`
+	Name          string `json:"name,omitempty"`
+	Size          string `json:"size,omitempty"`
+	ContentType   string `json:"content_type,omitempty"`
+	ThreadHash    string `json:"thread_hash,omitempty"`
+	ShouldPreview bool
 }

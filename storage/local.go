@@ -3,8 +3,8 @@ package storage
 import (
 	"bytes"
 	"fmt"
-	"github.com/nikola-susa/secret-chat/config"
-	"github.com/nikola-susa/secret-chat/crypt"
+	"github.com/nikola-susa/pigeon-box/config"
+	"github.com/nikola-susa/pigeon-box/crypt"
 	"io"
 	"os"
 	"path/filepath"

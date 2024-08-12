@@ -1,16 +1,119 @@
 package app
 
 import (
-	"github.com/nikola-susa/secret-chat/crypt"
-	"github.com/nikola-susa/secret-chat/model"
-	"github.com/nikola-susa/secret-chat/storage"
-	"github.com/nikola-susa/secret-chat/templates"
+	"fmt"
+	"github.com/nikola-susa/pigeon-box/crypt"
+	"github.com/nikola-susa/pigeon-box/md"
+	"github.com/nikola-susa/pigeon-box/model"
+	"github.com/nikola-susa/pigeon-box/storage"
+	"github.com/nikola-susa/pigeon-box/templates"
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func (a *App) HandleRenderThread(w http.ResponseWriter, r *http.Request) {
+
+	userId := r.Context().Value(contextKey("user_id")).(int)
+
+	threadId, err := crypt.HashIDDecodeInt(r.PathValue("thread_id"), a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
+	if err != nil {
+		log.Printf("Error decoding thread id: %s", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	thread, err := a.Store.GetThread(threadId)
+	if err != nil {
+		log.Printf("Error getting thread by id: %s", err)
+
+		HTMXRedirect(w, r, fmt.Sprintf("/error/%d", http.StatusInternalServerError))
+		return
+	}
+
+	if thread == nil {
+		log.Printf("Error thread not found: %d", threadId)
+		HTMXRedirect(w, r, fmt.Sprintf("/error/%d", http.StatusNotFound))
+		return
+	}
+
+	user, err := a.Store.GetUser(userId)
+	if err != nil {
+		log.Printf("Error getting user by slack id: %s", err)
+		HTMXRedirect(w, r, fmt.Sprintf("/error/%d", http.StatusInternalServerError))
+		return
+	}
+
+	if user == nil {
+		log.Printf("Error user not found: %d", userId)
+		HTMXRedirect(w, r, fmt.Sprintf("/error/%d", http.StatusNotFound))
+		return
+	}
+
+	renderUser := model.RenderUser{
+		ID:       strconv.Itoa(*user.ID),
+		Name:     *user.Name,
+		Username: *user.Username,
+		Avatar:   *user.Avatar,
+		SlackID:  &user.SlackID,
+	}
+
+	expiresAt := ""
+	if thread.ExpiresAt != nil {
+		expr := *thread.ExpiresAt / 3600000000000
+		if expr == 1 {
+			expiresAt = "1 hour"
+		} else {
+			expiresAt = fmt.Sprintf("%d hours", expr)
+		}
+	}
+
+	msgExpiresAt := ""
+	if thread.MessagesExpiresAt != nil {
+		expr := *thread.MessagesExpiresAt / 3600000000000
+		if expr == 1 {
+			msgExpiresAt = "1 hour"
+		} else {
+			msgExpiresAt = fmt.Sprintf("%d hours", expr)
+		}
+	}
+
+	hashedAuthorId, err := crypt.HashIDEncodeInt(thread.UserID, a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
+
+	renderThread := model.RenderThread{
+		ID:                strconv.Itoa(*thread.ID),
+		Name:              thread.Name,
+		Description:       thread.Description,
+		AuthorID:          hashedAuthorId,
+		IsAuthor:          userId == thread.UserID,
+		ExpiresAt:         expiresAt,
+		MessagesExpiresAt: msgExpiresAt,
+		Version:           a.Config.Version,
+	}
+
+	component := templates.Home(renderThread, r.PathValue("thread_id"), renderUser)
+	err = component.Render(r.Context(), w)
+	if err != nil {
+		return
+	}
+}
+
+func (a *App) HandleGetMessages(w http.ResponseWriter, r *http.Request) {
+
+	var lastId *int
+	lastIdParam := r.URL.Query().Get("last_id")
+
+	if lastIdParam != "" {
+		lid, err := crypt.HashIDDecodeInt(lastIdParam, a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
+		if err != nil {
+			log.Printf("Error decoding last id: %s", err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		lastId = &lid
+	}
 
 	userId := r.Context().Value(contextKey("user_id")).(int)
 
@@ -50,7 +153,7 @@ func (a *App) HandleRenderThread(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rawMessages, err := a.Store.GetMessagesByThread(threadId)
+	rawMessages, err := a.Store.GetMessagesByThread(threadId, lastId)
 	if err != nil {
 		RenderError(w)
 		log.Printf("Error getting messages by thread: %s", err)
@@ -58,6 +161,11 @@ func (a *App) HandleRenderThread(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if rawMessages == nil {
+		return
+	}
+
+	var lastMessageId *int
 	var messages []model.RenderMessage
 	for _, m := range rawMessages {
 		user, err := a.Store.GetUser(m.UserID)
@@ -82,7 +190,8 @@ func (a *App) HandleRenderThread(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			stringMessage = string(decryptedMessage)
+			stringMessage = string(md.Parse(decryptedMessage))
+
 		}
 
 		var renderFile model.RenderFile
@@ -106,23 +215,49 @@ func (a *App) HandleRenderThread(w http.ResponseWriter, r *http.Request) {
 			}
 
 			renderFile = model.RenderFile{
-				ID:          hashedFileId,
-				Name:        file.Name,
-				Size:        storage.StringSize(*file.Size),
-				ContentType: *file.ContentType,
-				ThreadHash:  r.PathValue("thread_id"),
+				ID:            hashedFileId,
+				Name:          file.Name,
+				Size:          storage.StringSize(*file.Size),
+				ContentType:   *file.ContentType,
+				ThreadHash:    r.PathValue("thread_id"),
+				ShouldPreview: storage.IsPreview(*file),
 			}
 		}
 
 		hashedMessageId, err := crypt.HashIDEncodeInt(*m.ID, a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
 
+		createdAtInt, err := time.Parse(time.RFC3339, m.CreatedAt)
+		if err != nil {
+			log.Printf("Error parsing CreatedAt: %s", err)
+			continue
+		}
+
+		updatedAtFormatted := ""
+		if m.UpdatedAt != m.CreatedAt {
+			updatedAtInt, err := time.Parse(time.RFC3339, m.UpdatedAt)
+			if err != nil {
+				log.Printf("Error parsing UpdatedAt: %s", err)
+				continue
+			}
+			updatedAtFormatted = updatedAtInt.Format("15:04:05")
+		}
+
+		hashedUserId, err := crypt.HashIDEncodeInt(*user.ID, a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
+		if err != nil {
+			log.Printf("Error hashing user id: %s", err)
+			continue
+		}
+
 		messages = append(messages, model.RenderMessage{
-			ID:        hashedMessageId,
-			ThreadID:  r.PathValue("thread_id"),
-			Text:      stringMessage,
-			CreatedAt: m.CreatedAt,
+			ID:                 hashedMessageId,
+			ThreadID:           r.PathValue("thread_id"),
+			Text:               stringMessage,
+			CreatedAt:          m.CreatedAt,
+			CreatedAtFormatted: createdAtInt.Format("15:04:05"),
+			UpdatedAt:          m.UpdatedAt,
+			UpdatedAtFormatted: updatedAtFormatted,
 			User: model.RenderUser{
-				ID:       strconv.Itoa(*user.ID),
+				ID:       hashedUserId,
 				Name:     *user.Name,
 				Username: *user.Username,
 				Avatar:   *user.Avatar,
@@ -132,18 +267,146 @@ func (a *App) HandleRenderThread(w http.ResponseWriter, r *http.Request) {
 			IsAuthor: userId == m.UserID,
 		})
 
+		lastMessageId = m.ID
 	}
 
-	renderUser := model.RenderUser{
-		ID:       strconv.Itoa(*user.ID),
-		Name:     *user.Name,
-		Username: *user.Username,
-		Avatar:   *user.Avatar,
-	}
+	lastMessageIdHashed, err := crypt.HashIDEncodeInt(*lastMessageId, a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
 
-	component := templates.Home(*thread, r.PathValue("thread_id"), messages, renderUser)
+	component := templates.ChatList(messages, lastMessageIdHashed, r.PathValue("thread_id"))
 	err = component.Render(r.Context(), w)
 	if err != nil {
 		return
 	}
+}
+
+func (a *App) HandleThreadDelete(w http.ResponseWriter, r *http.Request) {
+
+	threadId, err := crypt.HashIDDecodeInt(r.PathValue("thread_id"), a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
+	if err != nil {
+		log.Printf("Error decoding thread id: %s", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	thread, err := a.Store.GetThread(threadId)
+	if err != nil {
+		log.Printf("Error getting thread by id: %s", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if thread == nil {
+		http.Error(w, "thread not found", http.StatusNotFound)
+		return
+	}
+
+	files, err := a.Store.GetFilesByThread(threadId)
+	if err != nil {
+		log.Printf("Error getting files by thread: %s", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	for _, file := range files {
+		if file.ID != nil {
+			err := a.Storage.Delete(*file.Path)
+			if err != nil {
+				continue
+			}
+		}
+	}
+
+	err = a.Store.DeleteThread(threadId)
+	if err != nil {
+		log.Printf("Error deleting thread: %s", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	_, _, err = a.SlackApi.DeleteMessage(thread.SlackID, *thread.SlackTimestamp)
+	if err != nil {
+		log.Printf("Error deleting slack message: %s", err)
+	}
+
+	HTMXRedirect(w, r, "/not-authenticated")
+}
+
+func (a *App) HandleThreadSlackDetails(w http.ResponseWriter, r *http.Request) {
+
+	threadId, err := crypt.HashIDDecodeInt(r.PathValue("thread_id"), a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
+	if err != nil {
+		log.Printf("Error decoding thread id: %s", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	thread, err := a.Store.GetThread(threadId)
+	if err != nil {
+		log.Printf("Error getting thread by id: %s", err)
+		return
+	}
+
+	if thread == nil {
+		http.Error(w, "thread not found", http.StatusNotFound)
+		return
+	}
+
+	var channelName string
+	var channelDM string
+	if thread.SlackID[0] == 'C' {
+		channel, err := a.SlackAction.GetSlackChannel(thread.SlackID)
+		if err != nil {
+			log.Printf("Error getting slack channel by id: %s", err)
+			return
+		}
+		channelName = channel.Name
+	}
+
+	if thread.SlackID[0] == 'D' {
+		members, err := a.SlackAction.GetMPIMembers(thread.SlackID)
+		if err != nil {
+			log.Printf("Error getting slack channel members: %s", err)
+			return
+		}
+		for i, member := range members {
+			user, err := a.SlackAction.GetSlackUser(member)
+			if err != nil {
+				log.Printf("Error getting user by slack id: %s", err)
+				return
+			}
+			if user == nil {
+				log.Printf("Error user not found: %s", member)
+				return
+			}
+			channelDM += user.RealName
+			if i < len(members)-1 {
+				channelDM += ", "
+			}
+		}
+	}
+
+	component := templates.SlackDetails(channelName, channelDM)
+	err = component.Render(r.Context(), w)
+	if err != nil {
+		return
+	}
+
+}
+
+func (a *App) HandleThreadSlackWorkspace(w http.ResponseWriter, r *http.Request) {
+
+	var workspaceName string
+	workspace, err := a.SlackApi.GetTeamInfo()
+	if err != nil {
+		log.Printf("Error getting slack workspace by id: %s", err)
+		return
+	}
+	workspaceName = workspace.Name
+
+	component := templates.SlackWorkspace(workspaceName)
+	err = component.Render(r.Context(), w)
+	if err != nil {
+		return
+	}
+
 }

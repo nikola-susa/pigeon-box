@@ -2,8 +2,8 @@ package slackaction
 
 import (
 	"fmt"
-	"github.com/nikola-susa/secret-chat/crypt"
-	"github.com/nikola-susa/secret-chat/model"
+	"github.com/nikola-susa/pigeon-box/crypt"
+	"github.com/nikola-susa/pigeon-box/model"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/socketmode"
 	"log"
@@ -11,7 +11,45 @@ import (
 	"time"
 )
 
-func (s *SlackAction) CreateThreadDialog(envelope socketmode.Event) {
+func getDialog(defaultName string) slack.Dialog {
+
+	name := slack.NewTextInput("name", "Thread name", defaultName)
+	name.Hint = "Name is not encrypted. It will help slack search/id the thread later."
+	description := slack.NewTextAreaInput("description", "Description", "A new secure thread.")
+	description.Optional = true
+	description.Hint = "Description is not encrypted. It will help slack search/id the thread later."
+
+	expirationOpts := []slack.DialogSelectOption{
+		{Label: "No Expiration", Value: "no_expiration"},
+		{Label: "1 hour", Value: "1"},
+		{Label: "2 hours", Value: "2"},
+		{Label: "3 hours", Value: "3"},
+		{Label: "6 hours", Value: "6"},
+		{Label: "12 hours", Value: "12"},
+		{Label: "1 day", Value: "24"},
+		{Label: "2 days", Value: "48"},
+		{Label: "3 days", Value: "72"},
+		{Label: "7 days", Value: "168"},
+	}
+	expiration := slack.NewStaticSelectDialogInput("expiration_time", "Thread Expiration", expirationOpts)
+	expiration.Hint = "Thread will expire after x days of no new messages."
+	expiration.Value = "48"
+
+	msgExpiration := slack.NewStaticSelectDialogInput("expiration_time_msg", "Message Expiration", expirationOpts)
+	msgExpiration.Hint = "Messages will expire after x days of being posted."
+	msgExpiration.Value = "3"
+
+	dialog := slack.Dialog{
+		CallbackID:  "create-thread-dialog",
+		Title:       "New Thread",
+		Elements:    []slack.DialogElement{name, description, expiration, msgExpiration},
+		SubmitLabel: "Submit",
+	}
+
+	return dialog
+}
+
+func (s *SlackAction) CreateThreadDialogCommand(envelope socketmode.Event) {
 
 	s.Socket.Ack(*envelope.Request)
 
@@ -26,22 +64,31 @@ func (s *SlackAction) CreateThreadDialog(envelope socketmode.Event) {
 		defaultName = cmd.Text
 	}
 
-	name := slack.NewTextInput("name", "Thread name", defaultName)
-	name.Hint = "Name is not encrypted. It will help slack search the thread later."
-	description := slack.NewTextAreaInput("description", "Description", "A new secure thread.")
-	description.Optional = true
-	description.Hint = "Description is not encrypted. It will help slack search the thread later."
-
-	dialog := slack.Dialog{
-		CallbackID:  "create-thread-dialog",
-		Title:       "New Thread",
-		Elements:    []slack.DialogElement{name, description},
-		SubmitLabel: "Submit",
-	}
+	dialog := getDialog(defaultName)
 
 	err := s.Api.OpenDialog(cmd.TriggerID, dialog)
 	if err != nil {
+		fmt.Println(err)
 		s.AckError(err, "Error creating thread", cmd.UserID)
+		return
+	}
+}
+
+func (s *SlackAction) CreateThreadDialogAction(payload socketmode.Event) {
+
+	s.Socket.Ack(*payload.Request)
+
+	cmd, ok := payload.Data.(slack.InteractionCallback)
+	if !ok {
+		return
+	}
+
+	dialog := getDialog("")
+
+	err := s.Api.OpenDialog(cmd.TriggerID, dialog)
+	if err != nil {
+		fmt.Println(err)
+		s.AckError(err, "Error creating thread", cmd.User.ID)
 		return
 	}
 }
@@ -64,17 +111,53 @@ func (s *SlackAction) CreateThread(payload slack.InteractionCallback) {
 
 	name := payload.Submission["name"]
 	description := "A new secure thread."
+	expirationTime := 0
+	expirationTimeMsg := 0
 
 	if payload.Submission["description"] != "" {
 		description = payload.Submission["description"]
 	}
 
+	if payload.Submission["expiration_time"] != "" {
+		if payload.Submission["expiration_time"] != "no_expiration" {
+			expirationTime, err = strconv.Atoi(payload.Submission["expiration_time"])
+			if err != nil {
+				fmt.Println("expiration time", err)
+				return
+			}
+		}
+	}
+
+	if payload.Submission["expiration_time_msg"] != "" {
+		if payload.Submission["expiration_time_msg"] != "no_expiration" {
+			expirationTimeMsg, err = strconv.Atoi(payload.Submission["expiration_time_msg"])
+			if err != nil {
+				fmt.Println("expiration time msg", err)
+				return
+			}
+		}
+	}
+
+	var expireAt *time.Duration
+	if expirationTime != 0 {
+		duration := time.Duration(expirationTime) * time.Hour
+		expireAt = &duration
+	}
+
+	var msgExpireAt *time.Duration
+	if expirationTimeMsg != 0 {
+		duration := time.Duration(expirationTimeMsg) * time.Hour
+		msgExpireAt = &duration
+	}
+
 	thread := model.Thread{
-		Name:        name,
-		Description: &description,
-		UserID:      *userId,
-		SlackID:     payload.Channel.ID,
-		Key:         string(key),
+		Name:              name,
+		Description:       &description,
+		UserID:            *userId,
+		SlackID:           payload.Channel.ID,
+		Key:               string(key),
+		ExpiresAt:         expireAt,
+		MessagesExpiresAt: msgExpireAt,
 	}
 
 	id, err := s.Store.CreateThread(thread)
@@ -130,11 +213,21 @@ func (s *SlackAction) AuthThread(payload slack.InteractionCallback) {
 		thread, err := s.Store.GetThread(threadIdInt)
 		if err != nil {
 			fmt.Println("get thread", err)
+			_, _, err := s.Api.DeleteMessage(payload.Channel.ID, payload.Message.Timestamp)
+			if err != nil {
+				fmt.Println("delete thread", err)
+				return
+			}
 			return
 		}
 
 		if thread == nil {
 			fmt.Println("thread not found")
+			_, _, err := s.Api.DeleteMessage(payload.Channel.ID, payload.Message.Timestamp)
+			if err != nil {
+				fmt.Println("delete message", err)
+				return
+			}
 			return
 		}
 
@@ -153,14 +246,18 @@ func (s *SlackAction) AuthThread(payload slack.InteractionCallback) {
 		session, err := s.Store.CreateSession(model.Session{
 			UserID:    *user,
 			ThreadID:  threadIdInt,
-			ExpiresAt: time.Now().Add(90 * time.Second),
+			ExpiresAt: time.Now().Add(180 * time.Second),
 		})
 
 		hashedSessionID, err := crypt.HashIDEncodeInt(*session, s.Config.Crypt.HashSalt, s.Config.Crypt.HashLength)
+		if err != nil {
+			log.Printf("Error encoding session ID: %v", err)
+			return
+		}
 
 		url := fmt.Sprintf("%s/auth/%s/%s", s.Config.Public.URL, hashedThreadID, hashedSessionID)
 
-		blocks := authMessage(url, thread.Name, payload.Channel.ID, 60)
+		blocks := authMessage(url, thread.Name, payload.Channel.ID, 120)
 
 		msgOptions := slack.MsgOptionBlocks(blocks...)
 
@@ -198,7 +295,7 @@ func authMessage(url string, threadName string, channelId string, timeout int) [
 		),
 		slack.NewContextBlock(
 			"",
-			slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("This message will self destruct in _%s sec_.", timeoutStr), false, false),
+			slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("This message will self destruct in _%s sec_. :bomb:", timeoutStr), false, false),
 		),
 	}
 	return blocks

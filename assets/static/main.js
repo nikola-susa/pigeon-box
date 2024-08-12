@@ -1,56 +1,11 @@
-const { Marked } = window.marked;
-const { markedHighlight } = window.markedHighlight;
-const { markedAlert } = window.markedAlert;
-const { markedPlaintify } = window.markedPlaintify;
-
-const marked = new Marked(
-    markedHighlight({
-        langPrefix: 'hljs language-',
-        highlight(code, lang, info) {
-            const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-            return hljs.highlight(code, {language}).value;
-        }
-    }),
-    window.markedAlert(),
-);
-
-const plaintextMark = new Marked(
-    window.markedPlaintify(),
-);
-
-marked.use({
-    gfm: true,
-    breaks: true,
-});
-
-plaintextMark.use({
-    gfm: true,
-    breaks: true,
-});
-
-function renderChat(val) {
-    return marked.parse(val);
-}
 
 function copyPlainTextClipboard(val) {
     const textArea = document.createElement('textarea');
-    textArea.value = plaintextMark.parse(val);
+    textArea.value = val;
     document.body.appendChild(textArea);
     textArea.select();
     document.execCommand('copy');
     document.body.removeChild(textArea);
-
-}
-
-function drop(e) {
-    e.preventDefault();
-    const input = document.getElementById('files-input');
-    const dataTransfer = new DataTransfer();
-    Array.from(e.dataTransfer.files).forEach(file => dataTransfer.items.add(file));
-    input.files = dataTransfer.files;
-
-    const event = new Event('change');
-    input.dispatchEvent(event);
 
 }
 
@@ -60,7 +15,6 @@ function singleChat() {
         menuOpen: false,
         currentMenuIndex: 0,
         init() {
-
         },
         forceFocus($el) {
             const id = $el.closest("li").getAttribute("id");
@@ -133,86 +87,80 @@ function singleChat() {
     }
 }
 
-function markdownEditor(name) {
-    return {
-        editorValue: '',
-        renderedMarkdown: '',
-        files: [],
-        localKey: name + 'Text',
-        dragging: false,
-        filesInput: undefined,
-        textInput: undefined,
-        init() {
-            this.loadStoredText();
-            this.filesInput = document.getElementById('files-input');
-            this.textInput = document.getElementById('message-input');
-        },
-        handleFileUpload(e) {
-            console.log("e.detail.xhr.response", e.detail.xhr.response);
-        },
-        handleFileDelete(e) {
-            const index = this.files.findIndex(file => file.id === e.detail.id);
-            this.files.splice(index, 1);
-        },
-        resize() {
-            const textarea = this.textInput;
-            const maxHeight = 700;
-            textarea.style.height = 'auto';
-            textarea.style.height = (textarea.scrollHeight > maxHeight ? maxHeight : textarea.scrollHeight) + 'px';
-        },
-        handleInputEvent() {
-            this.editorValue = this.editorValue.trim() === '' ? '' : this.editorValue;
-            localStorage.setItem(this.localKey, this.editorValue);
-        },
-        loadStoredText() {
-            const storedText = localStorage.getItem(this.localKey);
-            if (storedText) {
-                this.editorValue = storedText;
-                this.handleInputEvent();
-                setTimeout(() => {
-                    resetResizer();
-                }, 10);
-            }
-        },
-        handleUploadButtonClick() {
-            this.filesInput.click();
-        }
-    }
+function drop(e) {
+    e.preventDefault();
+    const input = document.getElementById('files-input');
+    const dataTransfer = new DataTransfer();
+    Array.from(e.dataTransfer.files).forEach(file => dataTransfer.items.add(file));
+    input.files = dataTransfer.files;
+
+    const event = new Event('change');
+    input.dispatchEvent(event);
+
 }
+
 
 function Editor() {
     return {
         value: '',
-        init(autofocus = false) {
-            this.value = this.$refs.textarea.value;
+        localStorage: false,
+        localKey: 'editorText',
+        init(autofocus = false, localStorage = false, localKey = 'editorText') {
+
+            if (autofocus) {
+                this.$refs.textarea.focus();
+                this.$refs.textarea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            if (localStorage) {
+                this.localStorage = true;
+                this.localKey = localKey;
+                this.loadStoredText();
+            } else {
+                this.value = this.$refs.textarea.value;
+            }
+
             setTimeout(() => {
                 const event = new Event('input');
                 const input = this.$refs.textarea;
                 input.dispatchEvent(event);
             }, 10);
 
-            if (autofocus) {
-                this.$refs.textarea.focus();
-            }
+            this.handleInputEvent();
+
         },
         resize() {
             const textarea = this.$refs.textarea;
-            const maxHeight = 700;
+            const maxHeight = 300;
             this.$refs.textarea.style.height = 'auto';
             this.$refs.textarea.style.height = (textarea.scrollHeight > maxHeight ? maxHeight : textarea.scrollHeight) + 'px';
         },
         handleInputEvent() {
             this.value = this.value.trim() === '' ? '' : this.value;
+            if (this.localStorage) {
+                localStorage.setItem(this.localKey, this.value);
+            }
         },
+        loadStoredText() {
+            const storedText = localStorage.getItem(this.localKey);
+            if (storedText) {
+                this.value = storedText;
+                this.handleInputEvent();
+            }
+        },
+        scrollToMessage($el) {
+            const attribute = $el.getAttribute('data-message-id');
+            const element = document.getElementById(`m-${attribute}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        },
+        fileUpload() {
+            const input = document.getElementById('files-input');
+            input.click();
+        }
     }
 }
-
-function resetResizer() {
-    const event = new Event('input');
-    const input = document.getElementById('message-input');
-    input.dispatchEvent(event);
-}
-
 
 function chatNavigation() {
     return {
@@ -227,9 +175,9 @@ function chatNavigation() {
             const focusedItem = document.activeElement;
             let newItem = null;
 
-            if (event.key === 'ArrowUp') {
+            if (event.key === 'ArrowDown') {
                 newItem = focusedItem.previousElementSibling || focusedItem;
-            } else if (event.key === 'ArrowDown') {
+            } else if (event.key === 'ArrowUp') {
                 newItem = focusedItem.nextElementSibling || focusedItem;
             }
 
@@ -243,14 +191,9 @@ function chatNavigation() {
 
 function chatList() {
     return {
-        sessionDialog: false,
-        dialogClicks: 0,
-        showProgressBar: false,
-        progressInterval: null,
         activeIndex: 0,
         init() {
             this.resize();
-            this.scrollToBottom();
 
             const resizeObserver = new ResizeObserver((entries) => {
                 for (let entry of entries) {
@@ -262,7 +205,6 @@ function chatList() {
 
             resizeObserver.observe(document.getElementById('chat-form'));
             window.addEventListener('resize', this.resize);
-
         },
         handleKeydown(event) {
             switch (event.code) {
@@ -276,61 +218,16 @@ function chatList() {
         },
         scrollToBottom() {
             setTimeout(() => {
-                document.getElementById('chat-list').scrollTop = document.getElementById('chat-list').scrollHeight;
+                // document.getElementById('chat-list').scrollTop = document.getElementById('chat-list').scrollHeight;
             }, 100);
         },
         resize() {
-            const height = (window.innerHeight - 48) - document.getElementById('chat-form').clientHeight;
-            document.getElementById('chat-list').style.height = height + 'px';
-        },
-        sessionDialogClick() {
-            if (this.dialogClicks === 3) {
-                this.showProgressBar = false;
-                this.progressInterval = null;
-                return;
+            const height = document.getElementById('chat-container-wrap').clientHeight - document.getElementById('chat-form').clientHeight - document.getElementById('chat-title').clientHeight;
+            let margin = 40;
+            if (window.innerWidth < 768) {
+                margin = 12;
             }
-            this.sessionDialog = true;
-            this.dialogClicks += 1;
-
-            if (this.dialogClicks === 1) {
-                this.initializeProgressBar();
-                this.resetClicks();
-            }
-
-            if (this.dialogClicks === 3) {
-                this.sessionDialog = false;
-                document.querySelector('body').dispatchEvent(new Event('shutdown-session'));
-            }
-        },
-        resetClicks() {
-            setTimeout(() => {
-                if (this.dialogClicks < 3) {
-                    this.dialogClicks = 0;
-                    this.showProgressBar = false;
-                    this.progressInterval = null;
-                }
-            }, 5000);
-        },
-        initializeProgressBar() {
-            if (this.progressInterval) {
-                clearInterval(this.progressInterval);
-                this.progressInterval = null;
-            }
-
-            this.showProgressBar = true;
-            let progress = 0;
-            this.$refs.progressBar.style.width = `0%`;
-
-            this.progressInterval = setInterval(() => {
-                progress += 2;
-                this.$refs.progressBar.style.width = `${progress}%`;
-                if (progress >= 100) {
-                    clearInterval(this.progressInterval);
-                    this.showProgressBar = false;
-                    this.$refs.progressBar.style.width = `0%`;
-                    this.progressInterval = null;
-                }
-            }, 100);
+            document.getElementById('chat-list').style.height = height - margin + 'px';
         }
     }
 }
@@ -359,7 +256,13 @@ class Toast {
         document.getElementById("toast-container").style.display = 'block';
         const toastContainerBody = document.getElementById("toast-container-body");
         toastContainerBody.appendChild(toast);
-        toastContainerBody.scrollTop = toastContainerBody.scrollHeight;
+
+        setTimeout(() => {
+            toast.style.display = 'none';
+            if (toastContainerBody.children.length === 0) {
+                document.getElementById("toast-container").style.display = 'none';
+            }
+        }, 5000);
     }
 }
 
@@ -368,18 +271,49 @@ function onMakeToast(e) {
     toast.show();
 }
 
-function handleHideToast() {
-    const closeButton = document.getElementById('toast-container-close');
-    closeButton.addEventListener('click', function() {
-        const toastContainer = document.getElementById('toast-container');
-        toastContainer.style.display = 'none';
-    });
-}
-
 function init() {
-    handleHideToast();
+
+    if (history.scrollRestoration) {
+        history.scrollRestoration = "manual";
+    }
+
+    document.body.addEventListener('MessageEdited', function(e) {
+        const prevItems = document.getElementsByClassName("message-edited")
+        for (let i = 0; i < prevItems.length; i++) {
+            prevItems[i].classList.remove("message-edited");
+        }
+        const item = document.getElementById("m-"+e.detail.target);
+        item.classList.add("message-edited");
+    });
+
+    document.body.addEventListener('MessageEditCancelled', function(e) {
+        const item = document.getElementById("m-"+e.detail.target);
+        item.classList.remove("message-edited");
+    });
+
+    document.body.addEventListener('htmx:sseBeforeMessage', function(e) {
+        const type = e.detail.type;
+
+        if (type.startsWith("edited:")) {
+            const event = new CustomEvent('MessageUpdated' + e.detail.data);
+            document.body.dispatchEvent(event);
+        }
+        if (type.startsWith("deleted:")) {
+            const element = document.getElementById("m-" + e.detail.data);
+            if (element) {
+                element.remove();
+            }
+        }
+        if(type === "presence") {
+            const event = new CustomEvent('PresenceUpdate', {detail: e.detail.data});
+            document.body.dispatchEvent(event);
+
+            console.log("presence update", e.detail.data);
+        }
+    });
 
     document.body.addEventListener("showToast", onMakeToast);
+
 }
 
 init();

@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/nikola-susa/secret-chat/model"
+	"github.com/nikola-susa/pigeon-box/model"
 )
 
 func (s *Store) CreateFile(file model.File) (*int, error) {
@@ -42,6 +42,20 @@ func (s *Store) GetFile(id int) (*model.File, error) {
 		return nil, fmt.Errorf("get file by id: %w", err)
 	}
 	return &file, nil
+}
+
+func (s *Store) GetFilesByThread(threadID int) ([]model.File, error) {
+	var files []model.File
+	err := s.db.SelectContext(
+		context.Background(),
+		&files,
+		`SELECT * FROM file WHERE thread_id = $1`,
+		threadID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("get files by thread: %w", err)
+	}
+	return files, nil
 }
 
 func (s *Store) GetFileByPath(path string) (*model.File, error) {

@@ -5,19 +5,28 @@ templ ErrorPage() {
 <!DOCTYPE html>
     <html lang="en" data-theme="dark">
         <head>
-            <title>Secret Slack</title>
-             <meta charset="UTF-8">
-             <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+            <title>Pigeon box | Not authenticated</title>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+            <link rel="icon" href="/static/favicon.ico" sizes="any"/>
+
             <meta name="color-scheme" content="dark">
+            <meta name="theme-color" content="#f5c0c0">
             <link rel="stylesheet" href="/static/build.css">
         </head>
-        <body class="message-box-container">
+        <body class="message-box-container h-dvh">
 
             <div class="flex items-center justify-center h-screen relative">
-                <div class="w-[300px] p-6 border shadow bg-background">
-                    <div class="text-center">
-                        <h1 class="text-2xl font-bold text-primary mb-3">Thread not found</h1>
-                        <p class="text-base text-alt-foreground">Thread was <code>deleted</code>, never existed, or you don't have access to it.</p>
+                <div class="w-[300px] flex flex-col gap-3">
+                    <div class=" p-6 rounded border shadow bg-background text-center">
+                        <h1 class="text-2xl font-bold text-primary mb-3">Not authenticated</h1>
+                        <p class="text-base text-alt-foreground">You don't have access to this entity.</p>
+                    </div>
+                    <div class="text-center flex items-center justify-center gap-1.5">
+                        <div class="text-alt-foreground w-3 bg-background">
+                            @logo()
+                        </div>
+                        <div class="text-sm text-primary bg-background">Pigeon box</div>
                     </div>
                 </div>
             </div>

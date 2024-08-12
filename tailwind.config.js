@@ -98,12 +98,17 @@ module.exports = {
         'markdown-alert',
         'markdown-alert-title',
         'bg-black',
+        'message-edited',
+        'message-box-container',
     {
       pattern: /markdown-alert/,
     },
     {
       pattern: /markdown-alert-(tip|note|important|warning|caution)/,
-    }
+    },
+    {
+      pattern: /hl-(chroma|line|kd|p|c|o|nf|kt|k)/,
+    },
   ]
 }
 
