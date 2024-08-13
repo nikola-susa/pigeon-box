@@ -277,6 +277,10 @@ function init() {
         history.scrollRestoration = "manual";
     }
 
+    document.body.addEventListener('htmx:configRequest', function(e) {
+        e.detail.headers["X-Timezone"] = Intl.DateTimeFormat().resolvedOptions().timeZone
+    });
+
     document.body.addEventListener('MessageEdited', function(e) {
         const prevItems = document.getElementsByClassName("message-edited")
         for (let i = 0; i < prevItems.length; i++) {

@@ -99,19 +99,27 @@ func (a *App) HandleCreateNewMessage(w http.ResponseWriter, r *http.Request) {
 
 	hashedMessageId, err := crypt.HashIDEncodeInt(*id, a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
 
+	createdAtFormatted := ""
+	ct, err := ConvertTimeToUserRegion(r, time.Now().Format(time.RFC3339))
+	if err != nil {
+		log.Printf("Error converting time to user region: %s", err)
+		return
+	}
+	createdAtFormatted = ct.Format("15:04:05")
+
 	messageRender := model.RenderMessage{
 		ID:                 hashedMessageId,
 		ThreadID:           r.PathValue("thread_id"),
 		Text:               string(md.Parse([]byte(message))),
-		CreatedAt:          time.Now().Format("2006-01-02 15:04:05"),
-		CreatedAtFormatted: time.Now().Format("15:04:05"),
+		CreatedAt:          ct.Format(time.RFC3339),
+		CreatedAtFormatted: createdAtFormatted,
 		User: model.RenderUser{
 			ID:       strconv.Itoa(*user.ID),
 			Name:     *user.Name,
 			Username: *user.Username,
 			Avatar:   *user.Avatar,
 		},
-		Time:     time.Now().Format("2006-01-02 15:04:05"),
+		Time:     time.Now().Format(time.RFC3339),
 		File:     renderFile,
 		IsAuthor: userId == m.UserID,
 	}
@@ -171,7 +179,8 @@ func (a *App) HandleRenderEdit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if m.UserID != userId {
-		log.Printf("Error user not allowed to edit message: %d", userId)
+		log.Printf("Error user not allowed to edit message: %d, author %d, msg %d", userId, m.UserID, m.ID)
+		htmx.ErrorToast(w, "User not allowed to edit message")
 		http.Error(w, "user not allowed to edit message", http.StatusForbidden)
 		return
 	}
@@ -282,21 +291,25 @@ func (a *App) HandleChatBubbleRender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createdAtInt, err := time.Parse(time.RFC3339, m.CreatedAt)
-	if err != nil {
-		log.Printf("Error parsing CreatedAt: %s", err)
-		return
-	}
-
 	updatedAtFormatted := ""
 	if m.UpdatedAt != m.CreatedAt {
-		updatedAtInt, err := time.Parse(time.RFC3339, m.UpdatedAt)
+		ut, err := ConvertTimeToUserRegion(r, m.UpdatedAt)
 		if err != nil {
-			log.Printf("Error parsing UpdatedAt: %s", err)
+			log.Printf("Error converting time to user region: %s", err)
 			return
 		}
-		updatedAtFormatted = updatedAtInt.Format("15:04:05")
+		updatedAtFormatted = ut.Format("15:04:05")
+		m.UpdatedAt = ut.Format(time.RFC3339)
 	}
+
+	createdAtFormatted := ""
+	ct, err := ConvertTimeToUserRegion(r, m.CreatedAt)
+	if err != nil {
+		log.Printf("Error converting time to user region: %s", err)
+		return
+	}
+	createdAtFormatted = ct.Format("15:04:05")
+	m.CreatedAt = ct.Format(time.RFC3339)
 
 	stringMessage := *m.Text
 	if *m.Text != "" && m.Text != nil {
@@ -316,7 +329,7 @@ func (a *App) HandleChatBubbleRender(w http.ResponseWriter, r *http.Request) {
 		ThreadID:           r.PathValue("thread_id"),
 		Text:               stringMessage,
 		CreatedAt:          m.CreatedAt,
-		CreatedAtFormatted: createdAtInt.Format("15:04:05"),
+		CreatedAtFormatted: createdAtFormatted,
 		UpdatedAt:          m.UpdatedAt,
 		UpdatedAtFormatted: updatedAtFormatted,
 		User: model.RenderUser{
@@ -472,7 +485,8 @@ func (a *App) HandleDeleteMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if message.UserID != userId {
-		log.Printf("Error user not allowed to delete message: %d", userId)
+		log.Printf("Error user not allowed to delete message: %d, author: %d, msd: %s", userId, message.UserID, message.ID)
+		htmx.ErrorToast(w, "User not allowed to delete message")
 		http.Error(w, "user not allowed to delete message", http.StatusForbidden)
 		return
 	}

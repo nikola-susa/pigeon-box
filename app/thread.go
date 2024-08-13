@@ -226,21 +226,25 @@ func (a *App) HandleGetMessages(w http.ResponseWriter, r *http.Request) {
 
 		hashedMessageId, err := crypt.HashIDEncodeInt(*m.ID, a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
 
-		createdAtInt, err := time.Parse(time.RFC3339, m.CreatedAt)
-		if err != nil {
-			log.Printf("Error parsing CreatedAt: %s", err)
-			continue
-		}
-
 		updatedAtFormatted := ""
 		if m.UpdatedAt != m.CreatedAt {
-			updatedAtInt, err := time.Parse(time.RFC3339, m.UpdatedAt)
+			ut, err := ConvertTimeToUserRegion(r, m.UpdatedAt)
 			if err != nil {
-				log.Printf("Error parsing UpdatedAt: %s", err)
+				log.Printf("Error converting time to user region: %s", err)
 				continue
 			}
-			updatedAtFormatted = updatedAtInt.Format("15:04:05")
+			updatedAtFormatted = ut.Format("15:04:05")
+			m.UpdatedAt = ut.Format(time.RFC3339)
 		}
+
+		createdAtFormatted := ""
+		ct, err := ConvertTimeToUserRegion(r, m.CreatedAt)
+		if err != nil {
+			log.Printf("Error converting time to user region: %s", err)
+			continue
+		}
+		createdAtFormatted = ct.Format("15:04:05")
+		m.CreatedAt = ct.Format(time.RFC3339)
 
 		hashedUserId, err := crypt.HashIDEncodeInt(*user.ID, a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
 		if err != nil {
@@ -253,7 +257,7 @@ func (a *App) HandleGetMessages(w http.ResponseWriter, r *http.Request) {
 			ThreadID:           r.PathValue("thread_id"),
 			Text:               stringMessage,
 			CreatedAt:          m.CreatedAt,
-			CreatedAtFormatted: createdAtInt.Format("15:04:05"),
+			CreatedAtFormatted: createdAtFormatted,
 			UpdatedAt:          m.UpdatedAt,
 			UpdatedAtFormatted: updatedAtFormatted,
 			User: model.RenderUser{

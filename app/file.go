@@ -136,12 +136,7 @@ func (a *App) HandleCreateFileMessage(w http.ResponseWriter, r *http.Request) {
 
 		if thread.MessagesExpiresAt != nil {
 			expiration := time.Now().Add(*thread.MessagesExpiresAt)
-			err = a.Store.SetMessageExpiresAt(*id, expiration)
-			if err != nil {
-				log.Printf("Error setting message expiration: %s", err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
+			err = a.Store.SetMessageExpiresAt(*messageId, expiration)
 		}
 
 		user, err := a.Store.GetUser(userId)
@@ -160,12 +155,20 @@ func (a *App) HandleCreateFileMessage(w http.ResponseWriter, r *http.Request) {
 
 		hashedMessageId, err := crypt.HashIDEncodeInt(*id, a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
 
+		createdAtFormatted := ""
+		ct, err := ConvertTimeToUserRegion(r, time.Now().Format(time.RFC3339))
+		if err != nil {
+			log.Printf("Error converting time to user region: %s", err)
+			return
+		}
+		createdAtFormatted = ct.Format("15:04:05")
+
 		messageRender := model.RenderMessage{
 			ID:                 hashedMessageId,
 			ThreadID:           r.PathValue("thread_id"),
 			Text:               "",
-			CreatedAt:          time.Now().Format("2006-01-02 15:04:05"),
-			CreatedAtFormatted: time.Now().Format("15:04:05"),
+			CreatedAt:          ct.Format(time.RFC3339),
+			CreatedAtFormatted: createdAtFormatted,
 			User: model.RenderUser{
 				ID:       strconv.Itoa(*user.ID),
 				Name:     *user.Name,

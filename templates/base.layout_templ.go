@@ -8,7 +8,7 @@ package templates
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-func BaseLayout(title string) templ.Component {
+func BaseLayout(title string, description string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
@@ -45,7 +45,7 @@ func BaseLayout(title string) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</title><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><link rel=\"icon\" href=\"/static/favicon.ico\" sizes=\"any\"><meta name=\"color-scheme\" content=\"dark\"><meta name=\"theme-color\" content=\"#f5c0c0\"><link rel=\"stylesheet\" href=\"/static/build.css\"><script defer src=\"/static/vendor/htmx.min.js\"></script><script defer src=\"https://unpkg.com/htmx.org@1.9.12/dist/ext/sse.js\"></script><script defer src=\"https://cdn.jsdelivr.net/npm/@alpinejs/anchor@3.x.x/dist/cdn.min.js\"></script><script defer src=\"https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js\"></script></head><body hx-indicator=\".loading-bar\" x-data=\"{ dragover: false }\" @dragover.prevent=\"dragover = true\" @dragleave.prevent=\"dragover = false\" @drop.prevent=\"drop\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</title><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><link rel=\"icon\" href=\"/static/favicon.ico\" sizes=\"any\"><meta name=\"color-scheme\" content=\"dark\"><meta name=\"theme-color\" content=\"#f5c0c0\"><link rel=\"stylesheet\" href=\"/static/build.css\"><script defer src=\"https://cdn.jsdelivr.net/npm/@alpinejs/anchor@3.x.x/dist/cdn.min.js\"></script><script defer src=\"https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js\"></script></head><body hx-indicator=\".loading-bar\" x-data=\"{ dragover: false }\" @dragover.prevent=\"dragover = true\" @dragleave.prevent=\"dragover = false\" @drop.prevent=\"drop\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -53,7 +53,7 @@ func BaseLayout(title string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<section id=\"toast-container\" class=\"fixed top-12 right-3 w-[400px] text-sm tracking-wide\" style=\"display: none;\"><div id=\"toast-container-body\" class=\"font-mono overflow-auto max-h-32 z-[99999] relative flex flex-col gap-1.5\"><div class=\"toast z-[99999] bg-background/70 backdrop-blur border rounded shadow-lg p-1.5 relative\" id=\"toast-template\" style=\"display: none;\"><div class=\"toast-title whitespace-nowrap\"><span class=\"text-alt-foreground/70\"></span> <strong class=\"uppercase font-normal\"></strong> <span></span></div></div></div></section></body><script src=\"/static/main.js\"></script></html>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<section id=\"toast-container\" class=\"fixed top-12 right-3 w-[400px] text-sm tracking-wide\" style=\"display: none;\"><div id=\"toast-container-body\" class=\"font-mono overflow-auto max-h-32 z-[99999] relative flex flex-col gap-1.5\"><div class=\"toast z-[99999] bg-background/70 backdrop-blur border rounded shadow-lg p-1.5 relative\" id=\"toast-template\" style=\"display: none;\"><div class=\"toast-title whitespace-nowrap\"><span class=\"text-alt-foreground/70\"></span> <strong class=\"uppercase font-normal\"></strong> <span></span></div></div></div></section></body><script src=\"/static/vendor/htmx.min.js\"></script><script src=\"https://unpkg.com/htmx.org@1.9.12/dist/ext/sse.js\"></script><script src=\"/static/main.js\"></script></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -1,7 +1,7 @@
 package templates
 
 
-templ BaseLayout(title string) {
+templ BaseLayout(title string, description string) {
     <!DOCTYPE html>
     <html lang="en" data-theme="dark">
         <head>
@@ -17,8 +17,6 @@ templ BaseLayout(title string) {
         <meta name="color-scheme" content="dark">
         <meta name="theme-color" content="#f5c0c0">
         <link rel="stylesheet" href="/static/build.css">
-        <script defer src="/static/vendor/htmx.min.js"></script>
-        <script defer src="https://unpkg.com/htmx.org@1.9.12/dist/ext/sse.js"></script>
         <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/anchor@3.x.x/dist/cdn.min.js"></script>
         <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
         </head>
@@ -41,6 +39,8 @@ templ BaseLayout(title string) {
                 </div>
             </section>
         </body>
+        <script src="/static/vendor/htmx.min.js"></script>
+        <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/sse.js"></script>
         <script src="/static/main.js"></script>
     </html>
 }

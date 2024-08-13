@@ -17,8 +17,6 @@ func AuthMiddleware(a *App) func(next http.Handler) http.Handler {
 
 			c, err := r.Cookie("session_token")
 			if err != nil {
-				log.Println("cookie error", err)
-
 				HTMXRedirect(w, r, "/not-authenticated")
 				return
 			}
@@ -74,7 +72,6 @@ func EventMiddleware(a *App) func(next http.Handler) http.Handler {
 
 			c, err := r.Cookie("session_token")
 			if err != nil {
-				log.Println("cookie error", err)
 				HTMXRedirect(w, r, "/not-authenticated")
 				return
 			}
@@ -89,7 +86,7 @@ func EventMiddleware(a *App) func(next http.Handler) http.Handler {
 			session, err := a.Store.GetSession(token)
 			if err != nil {
 				log.Println("get session error", err)
-				http.Redirect(w, r, "/not-authenticated", http.StatusSeeOther)
+				HTMXRedirect(w, r, "/not-authenticated")
 				return
 			}
 

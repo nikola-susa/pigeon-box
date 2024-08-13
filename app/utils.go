@@ -5,6 +5,7 @@ import (
 	"github.com/nikola-susa/pigeon-box/templates"
 	"golang.org/x/net/context"
 	"net/http"
+	"time"
 )
 
 type resource struct {
@@ -46,4 +47,26 @@ func HTMXRedirect(w http.ResponseWriter, r *http.Request, url string) {
 	} else {
 		http.Redirect(w, r, url, http.StatusSeeOther)
 	}
+}
+
+func ConvertTimeToUserRegion(r *http.Request, t string) (*time.Time, error) {
+
+	region := r.Header.Get("X-Timezone")
+	if region == "" {
+		region = "UTC"
+	}
+
+	parsedTime, err := time.Parse(time.RFC3339, t)
+	if err != nil {
+		return nil, err
+	}
+
+	loc, err := time.LoadLocation(region)
+	if err != nil {
+		return nil, err
+	}
+
+	tt := parsedTime.In(loc)
+
+	return &tt, nil
 }

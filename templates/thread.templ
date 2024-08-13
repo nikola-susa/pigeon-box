@@ -5,7 +5,7 @@ import (
 )
 
 templ Home(thread model.RenderThread, id string, user model.RenderUser) {
-    @BaseLayout(thread.Name) {
+    @BaseLayout(thread.Name, *thread.Description) {
         <div x-data="chatList()" x-init="init()" @keydown.window="handleKeydown($event)">
             <div id="chat-container-wrap" class="message-box-container flex flex-col flex-1 h-dvh">
                 <main id="chat-container" class="message-box relative flex flex-col flex-1 grow border bg-background rounded-md shadow m-1.5 md:m-2 md:mb-8 min-h-[calc(100dvh - 12px)] max-h-[calc(100dvh - 12px)] md:min-h-[calc(100dvh - 40px)] md:max-h-[calc(100dvh - 40px)]">

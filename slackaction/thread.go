@@ -186,13 +186,18 @@ func (s *SlackAction) CreateThread(payload slack.InteractionCallback) {
 
 	_, messageTimestamp, err := s.Api.PostMessage(payload.Channel.ID, msgOptions, slack.MsgOptionAsUser(true))
 	if err != nil {
-		fmt.Println("post message", err)
+		log.Println("post message", err)
+		s.AckError(err, "Error creating thread. Bot is not a member of the chat.", payload.User.ID)
+		err = s.Store.DeleteThread(*id)
+		if err != nil {
+			log.Println("delete thread", err)
+		}
 		return
 	}
 
 	err = s.Store.SetThreadSlackTimestamp(*id, messageTimestamp)
 	if err != nil {
-		fmt.Println("set thread slack timestamp", err)
+		log.Println("set thread slack timestamp", err)
 		return
 	}
 

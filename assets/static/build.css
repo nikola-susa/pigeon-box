@@ -883,9 +883,7 @@ h6 {
   left: 0px;
   height: 100%;
   width: 0.25rem;
-  border-width: 1px;
-  --tw-border-opacity: 1;
-  border-color: oklch(var(--border) / var(--tw-border-opacity));
+  background-color: oklch(var(--primary) / 0.7);
   content: '';
 }
 

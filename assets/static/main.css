@@ -193,7 +193,6 @@
         @apply relative pl-4 my-4;
     }
 
-
     .chat blockquote {
         @apply relative pl-4 my-2;
     }
@@ -222,7 +221,7 @@
 
     .markdown-alert:before,
     .chat blockquote:before {
-        @apply absolute top-0 left-0 h-full w-1 border border-border;
+        @apply absolute top-0 left-0 h-full w-1 bg-primary/70;
         content: '';
     }
 
