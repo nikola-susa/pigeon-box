@@ -16,7 +16,9 @@ func New(c *config.Config) Storage {
 	driver := c.File.Driver
 	switch driver {
 	case "local":
-		return NewLocal(c.File.BaseDir, "", *c)
+		return NewLocal(c.File.Local.BaseDir, c.File.Local.PathPrefix, *c)
+	case "aws":
+		return NewAWS(c.File.AWS.NamePrefix, *c)
 	}
 	return Storage(nil)
 }

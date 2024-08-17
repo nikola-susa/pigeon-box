@@ -51,8 +51,10 @@ func (a *App) HandleRenderThread(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	hashedUserId, err := crypt.HashIDEncodeInt(userId, a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
+
 	renderUser := model.RenderUser{
-		ID:       strconv.Itoa(*user.ID),
+		ID:       hashedUserId,
 		Name:     *user.Name,
 		Username: *user.Username,
 		Avatar:   *user.Avatar,
@@ -70,8 +72,8 @@ func (a *App) HandleRenderThread(w http.ResponseWriter, r *http.Request) {
 	}
 
 	msgExpiresAt := ""
-	if thread.MessagesExpiresAt != nil {
-		expr := *thread.MessagesExpiresAt / 3600000000000
+	if thread.MessagesExpireAt != nil {
+		expr := *thread.MessagesExpireAt / 3600000000000
 		if expr == 1 {
 			msgExpiresAt = "1 hour"
 		} else {
@@ -82,14 +84,14 @@ func (a *App) HandleRenderThread(w http.ResponseWriter, r *http.Request) {
 	hashedAuthorId, err := crypt.HashIDEncodeInt(thread.UserID, a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
 
 	renderThread := model.RenderThread{
-		ID:                strconv.Itoa(*thread.ID),
-		Name:              thread.Name,
-		Description:       thread.Description,
-		AuthorID:          hashedAuthorId,
-		IsAuthor:          userId == thread.UserID,
-		ExpiresAt:         expiresAt,
-		MessagesExpiresAt: msgExpiresAt,
-		Version:           a.Config.Version,
+		ID:               strconv.Itoa(*thread.ID),
+		Name:             thread.Name,
+		Description:      thread.Description,
+		AuthorID:         hashedAuthorId,
+		IsAuthor:         userId == thread.UserID,
+		ExpiresAt:        expiresAt,
+		MessagesExpireAt: msgExpiresAt,
+		Version:          a.Config.Version,
 	}
 
 	component := templates.Home(renderThread, r.PathValue("thread_id"), renderUser)
@@ -179,11 +181,11 @@ func (a *App) HandleGetMessages(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		stringMessage := *m.Text
+		stringMessage := ""
 
-		if *m.Text != "" && m.Text != nil {
-			key, err := crypt.Decrypt(a.Config.Crypt.Passphrase, []byte(thread.Key))
-			decryptedMessage, err := crypt.Decrypt(string(key), []byte(*m.Text))
+		if m.Text != nil && m.FileID == nil {
+			key, err := crypt.Decrypt(a.Config.Crypt.Passphrase, thread.Key)
+			decryptedMessage, err := crypt.Decrypt(string(key), *m.Text)
 
 			if err != nil {
 				log.Printf("Error decrypting message: %s", err)

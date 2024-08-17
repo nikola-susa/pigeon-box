@@ -1,6 +1,8 @@
 package slackaction
 
-import "github.com/nikola-susa/pigeon-box/model"
+import (
+	"github.com/nikola-susa/pigeon-box/model"
+)
 
 func (s *SlackAction) GetOrCreateUser(slackID string) (*int, error) {
 	user, _ := s.Store.GetUserBySlackID(slackID)
@@ -13,12 +15,13 @@ func (s *SlackAction) GetOrCreateUser(slackID string) (*int, error) {
 		return nil, err
 	}
 
-	newUser := model.User{
+	newUser := model.CreateUser{
 		SlackID:  slackID,
-		Name:     &slackUser.RealName,
-		Username: &slackUser.Name,
-		Avatar:   &slackUser.Profile.ImageOriginal,
+		Name:     slackUser.RealName,
+		Username: slackUser.Name,
+		Avatar:   slackUser.Profile.ImageOriginal,
 	}
+
 	id, err := s.Store.CreateUser(newUser)
 	if err != nil {
 		return nil, err

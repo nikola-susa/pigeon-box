@@ -17,10 +17,10 @@ CREATE TABLE IF NOT EXISTS thread (
     name TEXT NOT NULL,
     description TEXT DEFAULT NULL,
     slack_timestamp TEXT DEFAULT NULL,
-    key TEXT NOT NULL,
+    key BLOB NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expires_at DATETIME DEFAULT NULL,
-    messages_expire_at DATETIME DEFAULT NULL,
+    expires_at INTEGER DEFAULT NULL,
+    messages_expire_at INTEGER DEFAULT NULL,
     FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 );
 
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS message (
     "thread_id" INTEGER NOT NULL,
     "user_id" INTEGER NOT NULL,
     "file_id" INTEGER DEFAULT NULL,
-    "text" TEXT DEFAULT NULL,
+    "text" BLOB DEFAULT NULL,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "expires_at" DATETIME DEFAULT NULL,

@@ -17,6 +17,13 @@ func AuthMiddleware(a *App) func(next http.Handler) http.Handler {
 
 			c, err := r.Cookie("session_token")
 			if err != nil {
+				log.Println("cookie error", err)
+				HTMXRedirect(w, r, "/not-authenticated")
+				return
+			}
+
+			if c == nil {
+				log.Println("cookie is nil")
 				HTMXRedirect(w, r, "/not-authenticated")
 				return
 			}
@@ -43,6 +50,7 @@ func AuthMiddleware(a *App) func(next http.Handler) http.Handler {
 
 			err = a.Store.UpdateSessionExpiresAt(session.ID, time.Now().Add(24*time.Hour))
 			if err != nil {
+				log.Println("update session error", err)
 				HTMXRedirect(w, r, "/not-authenticated")
 				return
 			}
@@ -54,7 +62,8 @@ func AuthMiddleware(a *App) func(next http.Handler) http.Handler {
 				Value:    c.Value,
 				Expires:  time.Now().Add(24 * time.Hour),
 				Path:     fmt.Sprintf("/t/%s", hashedThreadID),
-				SameSite: http.SameSiteStrictMode,
+				SameSite: http.SameSiteLaxMode,
+				Secure:   true,
 			})
 
 			ctx := context.WithValue(r.Context(), contextKey("user_id"), session.UserID)
@@ -72,27 +81,25 @@ func EventMiddleware(a *App) func(next http.Handler) http.Handler {
 
 			c, err := r.Cookie("session_token")
 			if err != nil {
-				HTMXRedirect(w, r, "/not-authenticated")
+				HTMXEventRedirect(w, r, a)
 				return
 			}
 
 			token, err := crypt.HashIDDecodeInt(c.Value, a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
 			if err != nil {
-				log.Println("hash decode error", err)
-				HTMXRedirect(w, r, "/not-authenticated")
+				HTMXEventRedirect(w, r, a)
 				return
 			}
 
 			session, err := a.Store.GetSession(token)
 			if err != nil {
-				log.Println("get session error", err)
-				HTMXRedirect(w, r, "/not-authenticated")
+				fmt.Println("token", token)
+				HTMXEventRedirect(w, r, a)
 				return
 			}
 
 			if session == nil {
-				log.Println("session not found")
-				HTMXRedirect(w, r, "/not-authenticated")
+				HTMXEventRedirect(w, r, a)
 				return
 			}
 

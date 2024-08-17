@@ -1,0 +1,21 @@
+# fly.toml app configuration file generated for pigeon-box on 2024-08-14T19:51:25+02:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'pigeon-box'
+primary_region = 'iad'
+
+[build]
+
+[http_service]
+  internal_port = 8081
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ['app']
+
+[[vm]]
+  size = 'shared-cpu-1x'
+  memory_request = 256

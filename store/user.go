@@ -8,10 +8,10 @@ import (
 	"github.com/nikola-susa/pigeon-box/model"
 )
 
-func (s *Store) CreateUser(user model.User) (*int, error) {
-	row := s.db.QueryRowContext(
-		context.Background(),
-		`INSERT INTO user (name, username, slack_id, avatar) VALUES ($1, $2, $3, $4) RETURNING id`,
+func (s *Store) CreateUser(user model.CreateUser) (*int, error) {
+
+	row := s.db.QueryRow(
+		`INSERT INTO user (name, username, slack_id, avatar) VALUES (?, ?, ?, ?) RETURNING id`,
 		user.Name,
 		user.Username,
 		user.SlackID,
@@ -30,7 +30,7 @@ func (s *Store) GetUser(id int) (*model.User, error) {
 	err := s.db.GetContext(
 		context.Background(),
 		&user,
-		`SELECT * FROM user WHERE id = $1`,
+		`SELECT * FROM user WHERE id = ?`,
 		id,
 	)
 	if err != nil {
@@ -47,7 +47,7 @@ func (s *Store) GetUserBySlackID(slackID string) (*model.User, error) {
 	err := s.db.GetContext(
 		context.Background(),
 		&user,
-		`SELECT * FROM user WHERE slack_id = $1`,
+		`SELECT * FROM user WHERE slack_id = ?`,
 		slackID,
 	)
 	if err != nil {
@@ -59,14 +59,15 @@ func (s *Store) GetUserBySlackID(slackID string) (*model.User, error) {
 	return &user, nil
 }
 
-func (s *Store) UpdateUser(user model.User) error {
+func (s *Store) UpdateUser(user model.CreateUser) error {
 	_, err := s.db.ExecContext(
 		context.Background(),
-		`UPDATE user SET slack_id = $1, name = $2, username = $3, avatar = $4 WHERE id = $1`,
+		`UPDATE user SET slack_id = ?, name = ?, username = ?, avatar = ? WHERE id = ?`,
 		user.SlackID,
 		user.Name,
 		user.Username,
 		user.Avatar,
+		user.SlackID,
 	)
 	if err != nil {
 		return fmt.Errorf("update user: %w", err)

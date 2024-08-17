@@ -18,7 +18,7 @@ type LocalStorage struct {
 	MkdirPerm  os.FileMode
 	WritePerm  os.FileMode
 	ExpireTime time.Duration
-	config     config.Config
+	Config     config.Config
 }
 
 func NewLocal(baseDir string, pathPrefix string, conf config.Config) *LocalStorage {
@@ -30,7 +30,7 @@ func NewLocal(baseDir string, pathPrefix string, conf config.Config) *LocalStora
 		PathPrefix: pathPrefix,
 		MkdirPerm:  0755,
 		WritePerm:  0644,
-		config:     conf,
+		Config:     conf,
 	}
 	return s
 }

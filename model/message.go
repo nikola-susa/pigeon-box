@@ -5,7 +5,7 @@ type Message struct {
 	ThreadID  int     `json:"thread_id,omitempty" db:"thread_id"`
 	UserID    int     `json:"user_id,omitempty" db:"user_id"`
 	FileID    *int    `json:"file_id,omitempty" db:"file_id"`
-	Text      *string `json:"text,omitempty" db:"text"`
+	Text      *[]byte `json:"text,omitempty" db:"text"`
 	CreatedAt string  `json:"created_at,omitempty" db:"created_at"`
 	UpdatedAt string  `json:"updated_at,omitempty" db:"updated_at"`
 	ExpiresAt *string `json:"expires_at,omitempty" db:"expires_at"`
@@ -14,12 +14,12 @@ type Message struct {
 type CreateMessageParams struct {
 	UserID   int
 	ThreadID int
-	Text     string
+	Text     []byte
 }
 
 type UpdateMessageParams struct {
 	ID   int
-	Text string
+	Text []byte
 }
 
 type RenderMessage struct {

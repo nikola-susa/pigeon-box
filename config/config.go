@@ -14,7 +14,7 @@ type Config struct {
 	}
 	Server struct {
 		Host string `envconfig:"SERVER_HOST" default:"localhost"`
-		Port int    `envconfig:"SERVER_PORT" default:"8081"`
+		Port string `envconfig:"SERVER_PORT" default:"8081"`
 	}
 	Slack struct {
 		AppToken          string `envconfig:"SLACK_APP_TOKEN" required:"true"`
@@ -25,36 +25,43 @@ type Config struct {
 		URL string `envconfig:"DATABASE_URL" default:"file:./local.db"`
 	}
 	File struct {
+		MaxSize string `envconfig:"FILE_MAX_SIZE" default:"32"`
 		BaseDir string `envconfig:"FILE_BASE_DIR" default:"./bucket"`
 		Driver  string `envconfig:"FILE_DRIVER" default:"local"`
-		MaxSize int64  `envconfig:"FILE_MAX_SIZE" default:"32"`
+		Local   struct {
+			PathPrefix string `envconfig:"FILE_LOCAL_PATH_PREFIX" default:"/"`
+			BaseDir    string `envconfig:"FILE_LOCAL_BASE_DIR" default:"./bucket"`
+		}
+		AWS struct {
+			AccessKeyID     string `envconfig:"AWS_ACCESS_KEY_ID" default:""`
+			SecretAccessKey string `envconfig:"AWS_SECRET_ACCESS_KEY" default:""`
+			EndpointURL     string `envconfig:"AWS_ENDPOINT_URL_S3" default:""`
+			Region          string `envconfig:"AWS_REGION" default:"auto"`
+			BucketName      string `envconfig:"AWS_BUCKET_NAME" default:""`
+			NamePrefix      string `envconfig:"AWS_NAME_PREFIX" default:""`
+		}
 	}
 	Crypt struct {
 		Passphrase string `envconfig:"CRYPT_PASSPHRASE" required:"true"`
 		HashSalt   string `envconfig:"CRYPT_HASH_SALT" required:"true"`
-		HashLength int    `envconfig:"CRYPT_HASH_LENGTH" default:"12"`
+		HashLength string `envconfig:"CRYPT_HASH_LENGTH" default:"12"`
 	}
 }
 
 func NewConfig(file string) (*Config, error) {
 	if file != "" {
-		err := godotenv.Overload(file)
-		if err != nil {
-			return nil, err
+		absFile, _ := filepath.Abs(file)
+		_, err := os.Stat(absFile)
+		if err == nil {
+			err := godotenv.Overload(file)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
-	absFile, _ := filepath.Abs(file)
-	_, err := os.Stat(absFile)
-	fileNotExists := os.IsNotExist(err)
-	if fileNotExists {
-		return nil, err
-	}
-
-	_ = godotenv.Overload(absFile)
-
 	config := new(Config)
-	err = envconfig.Process("", config)
+	err := envconfig.Process("", config)
 	if err != nil {
 		return nil, err
 	}

@@ -12,7 +12,7 @@ import (
 func (s *Store) CreateMessage(message model.CreateMessageParams) (*int, error) {
 	row := s.db.QueryRowContext(
 		context.Background(),
-		`INSERT INTO message (text, user_id, thread_id) VALUES ($1, $2, $3) RETURNING id`,
+		`INSERT INTO message (text, user_id, thread_id) VALUES (?, ?, ?) RETURNING id`,
 		message.Text,
 		message.UserID,
 		message.ThreadID,
@@ -29,7 +29,7 @@ func (s *Store) CreateMessage(message model.CreateMessageParams) (*int, error) {
 func (s *Store) UpdateMessage(message model.UpdateMessageParams) error {
 	_, err := s.db.ExecContext(
 		context.Background(),
-		`UPDATE message SET text = $1, updated_at = DATETIME('now') WHERE id = $2`,
+		`UPDATE message SET text = ?, updated_at = DATETIME('now') WHERE id = ?`,
 		message.Text,
 		message.ID,
 	)
@@ -42,7 +42,7 @@ func (s *Store) UpdateMessage(message model.UpdateMessageParams) error {
 
 func (s *Store) GetMessage(messageID int) (*model.Message, error) {
 	var message model.Message
-	err := s.db.Get(&message, `SELECT id, thread_id, user_id, file_id, text, created_at, updated_at FROM message WHERE id = $1`, messageID)
+	err := s.db.Get(&message, `SELECT id, thread_id, user_id, file_id, text, created_at, updated_at FROM message WHERE id = ?`, messageID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -56,9 +56,9 @@ func (s *Store) GetMessagesByThread(threadId int, lastId *int) ([]model.Message,
 	var messages []model.Message
 	var err error
 	if lastId != nil {
-		err = s.db.Select(&messages, `SELECT id, thread_id, user_id, file_id, text, created_at, updated_at FROM message WHERE thread_id = $1 AND id < $2 ORDER BY created_at DESC LIMIT 25`, threadId, *lastId)
+		err = s.db.Select(&messages, `SELECT id, thread_id, user_id, file_id, text, created_at, updated_at FROM message WHERE thread_id = ? AND id < ? ORDER BY created_at DESC LIMIT 25`, threadId, *lastId)
 	} else {
-		err = s.db.Select(&messages, `SELECT id, thread_id, user_id, file_id, text, created_at, updated_at FROM message WHERE thread_id = $1 ORDER BY created_at DESC LIMIT 25`, threadId)
+		err = s.db.Select(&messages, `SELECT id, thread_id, user_id, file_id, text, created_at, updated_at FROM message WHERE thread_id = ? ORDER BY created_at DESC LIMIT 25`, threadId)
 	}
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -72,7 +72,7 @@ func (s *Store) GetMessagesByThread(threadId int, lastId *int) ([]model.Message,
 func (s *Store) SetMessageFileID(messageID int, fileID int) error {
 	_, err := s.db.ExecContext(
 		context.Background(),
-		`UPDATE message SET file_id = $1 WHERE id = $2`,
+		`UPDATE message SET file_id = ? WHERE id = ?`,
 		fileID,
 		messageID,
 	)
@@ -86,7 +86,7 @@ func (s *Store) SetMessageFileID(messageID int, fileID int) error {
 func (s *Store) SetMessageExpiresAt(messageID int, expireAt time.Time) error {
 	_, err := s.db.ExecContext(
 		context.Background(),
-		`UPDATE message SET expires_at = $1 WHERE id = $2`,
+		`UPDATE message SET expires_at = ? WHERE id = ?`,
 		expireAt,
 		messageID,
 	)
@@ -100,7 +100,7 @@ func (s *Store) SetMessageExpiresAt(messageID int, expireAt time.Time) error {
 func (s *Store) DeleteMessage(messageID int) error {
 	_, err := s.db.ExecContext(
 		context.Background(),
-		`DELETE FROM message WHERE id = $1`,
+		`DELETE FROM message WHERE id = ?`,
 		messageID,
 	)
 	if err != nil {

@@ -13,10 +13,35 @@ func (w *Worker) clearSessions() {
 	for {
 		select {
 		case <-ticker.C:
-			_ = w.Store.DeleteExpiredSessions()
+			w.collectExpiredSessions()
 		case <-w.Ctx.Done():
 			return
 		}
+	}
+}
+
+func (w *Worker) collectExpiredSessions() {
+	sessions, err := w.Store.GetExpiredSessions()
+	if err != nil {
+		fmt.Printf("error getting expired sessions: %s", err)
+		return
+	}
+	if sessions == nil {
+		return
+	}
+
+	for _, session := range sessions {
+		err = w.Store.DeleteSession(session.ID)
+		if err != nil {
+			fmt.Println("error deleting session: ", err)
+			return
+		}
+
+		hashedThreadID, _ := crypt.HashIDEncodeInt(session.ThreadID, w.Config.Crypt.HashSalt, w.Config.Crypt.HashLength)
+		hashedUserID, _ := crypt.HashIDEncodeInt(session.UserID, w.Config.Crypt.HashSalt, w.Config.Crypt.HashLength)
+
+		eventName := "logout:" + hashedThreadID
+		w.Event.Broadcast(hashedThreadID, []byte(""), &eventName, &hashedUserID, nil)
 	}
 }
 

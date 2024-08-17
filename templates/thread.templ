@@ -18,7 +18,7 @@ templ Home(thread model.RenderThread, id string, user model.RenderUser) {
                                         hx-get={ "/t/" + id + "/slack/info" } hx-trigger="click once, submit once" hx-target=".thread-details"
                                         tabindex="0"
                                     >
-                                        if thread.ExpiresAt != "" || thread.MessagesExpiresAt != "" {
+                                        if thread.ExpiresAt != "" || thread.MessagesExpireAt != "" {
                                             <div x-ref="description" class="w-4 h-4 flex items-center justify-center text-primary cursor-pointer hover:text-primary">
                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M5.75.75A.75.75 0 0 1 6.5 0h3a.75.75 0 0 1 0 1.5h-.75v1l-.001.041a6.724 6.724 0 0 1 3.464 1.435l.007-.006.75-.75a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734l-.75.75-.006.007a6.75 6.75 0 1 1-10.548 0L2.72 5.03l-.75-.75a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l.75.75.007.006A6.72 6.72 0 0 1 7.25 2.541V1.5H6.5a.75.75 0 0 1-.75-.75ZM8 14.5a5.25 5.25 0 1 0-.001-10.501A5.25 5.25 0 0 0 8 14.5Zm.389-6.7 1.33-1.33a.75.75 0 1 1 1.061 1.06L9.45 8.861A1.503 1.503 0 0 1 8 10.75a1.499 1.499 0 1 1 .389-2.95Z"></path></svg>
                                             </div>
@@ -31,7 +31,8 @@ templ Home(thread model.RenderThread, id string, user model.RenderUser) {
                                             { thread.Name }
                                         </div>
                                     </div>
-                                    <div x-show="open" x-anchor.bottom-start="$refs.description" role="tooltip" @click.outside="open = false" class="relative z-[999] min-w-64 bg-black p-3 text-foreground border rounded-lg" style="display: none;">
+                                    <div x-show="open" x-anchor.bottom-start="$refs.description" role="tooltip" @click.outside="open = false" class="relative z-[999] min-w-64 bg-black text-foreground border rounded-lg" style="display: none;">
+                                        <div class="max-h-[550px] max-h-[60dvh] overflow-auto p-3">
                                         <div class="flex flex-col gap-0.5 text-foreground">
                                             <div class="text-sm pb-0.5 text-alt-foreground">Thread name</div>
                                             <div class="text-md">{ thread.Name }</div>
@@ -40,7 +41,7 @@ templ Home(thread model.RenderThread, id string, user model.RenderUser) {
                                             <div class="text-md text-alt-foreground">{ *thread.Description }</div>
                                         </div>
                                         <div class="thread-details"></div>
-                                        if thread.ExpiresAt != "" || thread.MessagesExpiresAt != "" {
+                                        if thread.ExpiresAt != "" || thread.MessagesExpireAt != "" {
                                             <hr class="my-3"/>
                                             <div class="text-sm pb-1.5 text-alt-foreground">Thread expiration</div>
                                             <div class="bg-primary/10 rounded p-3">
@@ -48,12 +49,12 @@ templ Home(thread model.RenderThread, id string, user model.RenderUser) {
                                                     <div class="text-primary text-md">If no new messages, <br/> this thread will be auto-deleted after:</div>
                                                     <div class="pt-0.5 text-foreground text-base">{ thread.ExpiresAt }</div>
                                                 }
-                                                if thread.ExpiresAt != "" && thread.MessagesExpiresAt != "" {
+                                                if thread.ExpiresAt != "" && thread.MessagesExpireAt != "" {
                                                     <hr class="my-1.5 border-primary/30"/>
                                                 }
-                                                if thread.MessagesExpiresAt != "" {
+                                                if thread.MessagesExpireAt != "" {
                                                     <div class="text-primary text-md">Messages in this thread <br/> will be auto-deleted after:</div>
-                                                    <div class="pt-0.5 text-foreground text-base">{ thread.MessagesExpiresAt }</div>
+                                                    <div class="pt-0.5 text-foreground text-base">{ thread.MessagesExpireAt }</div>
                                                 }
                                             </div>
                                         }
@@ -72,6 +73,7 @@ templ Home(thread model.RenderThread, id string, user model.RenderUser) {
                                             </button>
                                             <div class="text-xss text-primary tracking-wider pt-1.5">All messages and files will be deleted. This is not reversible. There's no confirmation.</div>
                                         }
+                                    </div>
                                     </div>
                                 </div>
                             </div>
@@ -128,6 +130,7 @@ templ Home(thread model.RenderThread, id string, user model.RenderUser) {
                             <div hx-swap="none" sse-swap={ "edited:" + id }></div>
                             <div hx-swap="none" sse-swap={ "deleted:" + id }></div>
                             <div hx-swap="none" sse-swap={ "expired:" + id }></div>
+                            <div hx-swap="none" sse-swap={ "logout:" + id }></div>
 
                             <div hx-get={ "/t/" + id + "/m" } hx-trigger="revealed" class="relative mx-1.5" hx-swap="outerHTML">
                                 @chatSkeli()

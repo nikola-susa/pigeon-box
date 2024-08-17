@@ -11,7 +11,7 @@ import (
 func (s *Store) CreateFile(file model.File) (*int, error) {
 	row := s.db.QueryRowContext(
 		context.Background(),
-		`INSERT INTO file (name, path, size, content_type, thread_id, user_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+		`INSERT INTO file (name, path, size, content_type, thread_id, user_id) VALUES (?, ?, ?, ?, ?, ?) RETURNING id`,
 		file.Name,
 		file.Path,
 		file.Size,
@@ -32,7 +32,7 @@ func (s *Store) GetFile(id int) (*model.File, error) {
 	err := s.db.GetContext(
 		context.Background(),
 		&file,
-		`SELECT * FROM file WHERE id = $1`,
+		`SELECT * FROM file WHERE id = ?`,
 		id,
 	)
 	if err != nil {
@@ -49,7 +49,7 @@ func (s *Store) GetFilesByThread(threadID int) ([]model.File, error) {
 	err := s.db.SelectContext(
 		context.Background(),
 		&files,
-		`SELECT * FROM file WHERE thread_id = $1`,
+		`SELECT * FROM file WHERE thread_id = ?`,
 		threadID,
 	)
 	if err != nil {
@@ -63,7 +63,7 @@ func (s *Store) GetFileByPath(path string) (*model.File, error) {
 	err := s.db.GetContext(
 		context.Background(),
 		&file,
-		`SELECT * FROM file WHERE path = $1`,
+		`SELECT * FROM file WHERE path = ?`,
 		path,
 	)
 	if err != nil {
@@ -78,7 +78,7 @@ func (s *Store) GetFileByPath(path string) (*model.File, error) {
 func (s *Store) DeleteFile(id int) error {
 	_, err := s.db.ExecContext(
 		context.Background(),
-		`DELETE FROM file WHERE id = $1`,
+		`DELETE FROM file WHERE id = ?`,
 		id,
 	)
 	if err != nil {

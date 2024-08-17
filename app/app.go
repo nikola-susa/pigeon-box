@@ -13,6 +13,7 @@ import (
 	"github.com/slack-go/slack/socketmode"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type App struct {
@@ -84,11 +85,16 @@ func (a *App) Serve() error {
 
 	mux.Handle("GET /static/{path...}", http.StripPrefix("/static/", http.FileServerFS(assets.PublicFS)))
 
+	postInt, err := strconv.Atoi(a.Config.Server.Port)
+	if err != nil {
+		log.Printf("Error parsing port: %s", err)
+	}
+
 	server := &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", a.Config.Server.Host, a.Config.Server.Port),
+		Addr:    fmt.Sprintf("%s:%d", a.Config.Server.Host, postInt),
 		Handler: mux,
 	}
 
-	log.Printf("Server listening on %s:%d", a.Config.Server.Host, a.Config.Server.Port)
+	log.Printf("Server listening on %s:%d", a.Config.Server.Host, postInt)
 	return server.ListenAndServe()
 }

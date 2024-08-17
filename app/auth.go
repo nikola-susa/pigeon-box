@@ -101,7 +101,7 @@ func (a *App) HandleAuth(w http.ResponseWriter, r *http.Request) {
 		Value:    r.PathValue("session_token"),
 		Expires:  time.Now().Add(24 * time.Hour),
 		Path:     fmt.Sprintf("/t/%s", hashedThreadID),
-		SameSite: http.SameSiteNoneMode,
+		SameSite: http.SameSiteLaxMode,
 		Secure:   true,
 	})
 

@@ -10,6 +10,13 @@ type User struct {
 	UpdatedAt *string `json:"updated_at,omitempty" db:"updated_at"`
 }
 
+type CreateUser struct {
+	Name     string `json:"name,omitempty"`
+	Username string `json:"username,omitempty"`
+	Avatar   string `json:"avatar,omitempty"`
+	SlackID  string `json:"slack_id,omitempty"`
+}
+
 type RenderUser struct {
 	ID       string  `json:"id,omitempty"`
 	Name     string  `json:"name,omitempty"`

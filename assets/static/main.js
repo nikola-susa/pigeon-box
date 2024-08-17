@@ -83,7 +83,7 @@ function singleChat() {
                     el.dispatchEvent(new Event('keyup-delete'));
                     break;
             }
-        },
+        }
     }
 }
 
@@ -118,6 +118,7 @@ function Editor() {
                 this.loadStoredText();
             } else {
                 this.value = this.$refs.textarea.value;
+                this.$refs.textarea.setSelectionRange(this.value.length, this.value.length);
             }
 
             setTimeout(() => {
@@ -271,11 +272,31 @@ function onMakeToast(e) {
     toast.show();
 }
 
+function sseErrorHandle() {
+    let errorCount = 0
+    const errorThreshold = 7
+
+    document.body.addEventListener('htmx:sseError', function(e) {
+        errorCount++
+        if (errorCount > errorThreshold) {
+            window.location.replace("/not-authenticated");
+        }
+    });
+
+    setTimeout(() => {
+        if (errorCount > 0) {
+            errorCount = 0
+        }
+    }, 1000*60);
+}
+
 function init() {
 
     if (history.scrollRestoration) {
         history.scrollRestoration = "manual";
     }
+
+    sseErrorHandle();
 
     document.body.addEventListener('htmx:configRequest', function(e) {
         e.detail.headers["X-Timezone"] = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -307,6 +328,9 @@ function init() {
             if (element) {
                 element.remove();
             }
+        }
+        if (type.startsWith("logout:")) {
+            window.location.replace("/not-authenticated");
         }
         if(type === "presence") {
             const event = new CustomEvent('PresenceUpdate', {detail: e.detail.data});

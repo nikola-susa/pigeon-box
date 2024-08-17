@@ -1473,6 +1473,30 @@ h6 {
   max-height: 8rem;
 }
 
+.max-h-\[150px\] {
+  max-height: 150px;
+}
+
+.max-h-\[350px\] {
+  max-height: 350px;
+}
+
+.max-h-80 {
+  max-height: 20rem;
+}
+
+.max-h-\[550px\] {
+  max-height: 550px;
+}
+
+.max-h-\[70dvh\] {
+  max-height: 70dvh;
+}
+
+.max-h-\[60dvh\] {
+  max-height: 60dvh;
+}
+
 .min-h-\[30px\] {
   min-height: 30px;
 }
@@ -1726,10 +1750,6 @@ h6 {
 .bg-background {
   --tw-bg-opacity: 1;
   background-color: oklch(var(--background) / var(--tw-bg-opacity));
-}
-
-.bg-background\/20 {
-  background-color: oklch(var(--background) / 0.2);
 }
 
 .bg-background\/70 {
@@ -2047,6 +2067,10 @@ h6 {
           backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
 }
 
+.ease-out {
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+
 @font-face {
   font-family: 'IBM Plex Sans';
 
@@ -2164,10 +2188,6 @@ h6 {
 
 .focus-within\:ring-primary\/20:focus-within {
   --tw-ring-color: oklch(var(--primary) / 0.2);
-}
-
-.hover\:bg-background\/30:hover {
-  background-color: oklch(var(--background) / 0.3);
 }
 
 .hover\:bg-primary\/30:hover {

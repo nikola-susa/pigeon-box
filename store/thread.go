@@ -9,16 +9,15 @@ import (
 )
 
 func (s *Store) CreateThread(thread model.Thread) (*int, error) {
-	row := s.db.QueryRowContext(
-		context.Background(),
-		`INSERT INTO thread (name, description, user_id, slack_id, key, expires_at, messages_expires_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+	row := s.db.QueryRow(
+		`INSERT INTO thread (name, description, user_id, slack_id, key, expires_at, messages_expire_at) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id`,
 		thread.Name,
 		thread.Description,
 		thread.UserID,
 		thread.SlackID,
 		thread.Key,
 		thread.ExpiresAt,
-		thread.MessagesExpiresAt,
+		thread.MessagesExpireAt,
 	)
 	var id int
 	err := row.Scan(&id)
@@ -31,7 +30,7 @@ func (s *Store) CreateThread(thread model.Thread) (*int, error) {
 func (s *Store) SetThreadSlackTimestamp(threadID int, slackTimestamp string) error {
 	_, err := s.db.ExecContext(
 		context.Background(),
-		`UPDATE thread SET slack_timestamp = $1 WHERE id = $2`,
+		`UPDATE thread SET slack_timestamp = ? WHERE id = ?`,
 		slackTimestamp,
 		threadID,
 	)
@@ -46,7 +45,7 @@ func (s *Store) GetThread(id int) (*model.Thread, error) {
 	err := s.db.GetContext(
 		context.Background(),
 		&thread,
-		`SELECT * FROM thread WHERE id = $1`,
+		`SELECT * FROM thread WHERE id = ?`,
 		id,
 	)
 	if err != nil {
@@ -61,7 +60,7 @@ func (s *Store) GetThread(id int) (*model.Thread, error) {
 func (s *Store) DeleteThread(id int) error {
 	_, err := s.db.ExecContext(
 		context.Background(),
-		`DELETE FROM thread WHERE id = $1`,
+		`DELETE FROM thread WHERE id = ?`,
 		id,
 	)
 	if err != nil {

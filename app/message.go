@@ -22,7 +22,7 @@ func (a *App) HandleCreateNewMessage(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		log.Printf("Error parsing form: %s", err)
-		htmx.ErrorToast(w, fmt.Sprintf("Error parsing form: %s", err))
+		htmx.ErrorToast(w, fmt.Sprintf("Error processing a from"))
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -30,7 +30,7 @@ func (a *App) HandleCreateNewMessage(w http.ResponseWriter, r *http.Request) {
 	message := r.FormValue("message")
 
 	if message == "" {
-		htmx.ErrorToast(w, "Cannot create message w/o content or files")
+		htmx.ErrorToast(w, "Cannot create message w/o content")
 		http.Error(w, "No message or files", http.StatusBadRequest)
 		return
 	}
@@ -44,6 +44,7 @@ func (a *App) HandleCreateNewMessage(w http.ResponseWriter, r *http.Request) {
 
 	if user == nil {
 		log.Printf("Error user not found: %d", userId)
+		HTMXRedirect(w, r, "/not-authenticated")
 		http.Error(w, "user not found", http.StatusNotFound)
 		return
 	}
@@ -58,6 +59,7 @@ func (a *App) HandleCreateNewMessage(w http.ResponseWriter, r *http.Request) {
 	thread, err := a.Store.GetThread(threadId)
 	if err != nil {
 		log.Printf("Error getting thread by id: %s", err)
+		HTMXRedirect(w, r, "/not-authenticated")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -68,7 +70,12 @@ func (a *App) HandleCreateNewMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	threadKey, err := crypt.Decrypt(a.Config.Crypt.Passphrase, []byte(thread.Key))
+	threadKey, err := crypt.Decrypt(a.Config.Crypt.Passphrase, thread.Key)
+	if err != nil {
+		log.Printf("Error decrypting thread key: %s", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	encryptedMessage, err := crypt.Encrypt(string(threadKey), []byte(message))
 	if err != nil {
@@ -80,18 +87,19 @@ func (a *App) HandleCreateNewMessage(w http.ResponseWriter, r *http.Request) {
 	m := model.CreateMessageParams{
 		UserID:   *user.ID,
 		ThreadID: *thread.ID,
-		Text:     string(encryptedMessage),
+		Text:     encryptedMessage,
 	}
 
 	id, err := a.Store.CreateMessage(m)
 	if err != nil {
 		log.Printf("Error creating message: %s", err)
+		htmx.ErrorToast(w, "Error creating message")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if thread.MessagesExpiresAt != nil {
-		expiration := time.Now().Add(*thread.MessagesExpiresAt)
+	if thread.MessagesExpireAt != nil {
+		expiration := time.Now().Add(*thread.MessagesExpireAt)
 		err = a.Store.SetMessageExpiresAt(*id, expiration)
 	}
 
@@ -198,11 +206,11 @@ func (a *App) HandleRenderEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stringMessage := *m.Text
+	stringMessage := ""
 
-	if *m.Text != "" && m.Text != nil {
-		key, err := crypt.Decrypt(a.Config.Crypt.Passphrase, []byte(thread.Key))
-		decryptedMessage, err := crypt.Decrypt(string(key), []byte(*m.Text))
+	if m.Text != nil {
+		key, err := crypt.Decrypt(a.Config.Crypt.Passphrase, thread.Key)
+		decryptedMessage, err := crypt.Decrypt(string(key), *m.Text)
 
 		if err != nil {
 			log.Printf("Error decrypting message: %s", err)
@@ -311,10 +319,10 @@ func (a *App) HandleChatBubbleRender(w http.ResponseWriter, r *http.Request) {
 	createdAtFormatted = ct.Format("15:04:05")
 	m.CreatedAt = ct.Format(time.RFC3339)
 
-	stringMessage := *m.Text
-	if *m.Text != "" && m.Text != nil {
-		key, err := crypt.Decrypt(a.Config.Crypt.Passphrase, []byte(thread.Key))
-		decryptedMessage, err := crypt.Decrypt(string(key), []byte(*m.Text))
+	stringMessage := ""
+	if m.Text != nil {
+		key, err := crypt.Decrypt(a.Config.Crypt.Passphrase, thread.Key)
+		decryptedMessage, err := crypt.Decrypt(string(key), *m.Text)
 
 		if err != nil {
 			log.Printf("Error decrypting message: %s", err)
@@ -412,7 +420,7 @@ func (a *App) HandleEditSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	threadKey, err := crypt.Decrypt(a.Config.Crypt.Passphrase, []byte(thread.Key))
+	threadKey, err := crypt.Decrypt(a.Config.Crypt.Passphrase, thread.Key)
 	if err != nil {
 		log.Printf("Error decrypting thread key: %s", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -428,10 +436,11 @@ func (a *App) HandleEditSubmit(w http.ResponseWriter, r *http.Request) {
 
 	err = a.Store.UpdateMessage(model.UpdateMessageParams{
 		ID:   messageId,
-		Text: string(encryptedMessage),
+		Text: encryptedMessage,
 	})
 	if err != nil {
 		log.Printf("updating message failed: %d", messageId)
+		htmx.ErrorToast(w, "Error updating message")
 		http.Error(w, "updating message failed", http.StatusInternalServerError)
 	}
 
@@ -473,6 +482,7 @@ func (a *App) HandleDeleteMessage(w http.ResponseWriter, r *http.Request) {
 	message, err := a.Store.GetMessage(messageId)
 	if err != nil {
 		log.Printf("Error getting message by id: %s", err)
+		htmx.ErrorToast(w, "Error getting message")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 
@@ -480,6 +490,7 @@ func (a *App) HandleDeleteMessage(w http.ResponseWriter, r *http.Request) {
 
 	if message == nil {
 		log.Printf("Error message not found: %d", messageId)
+		htmx.ErrorToast(w, "Error getting message")
 		http.Error(w, "message not found", http.StatusNotFound)
 		return
 	}
@@ -494,6 +505,7 @@ func (a *App) HandleDeleteMessage(w http.ResponseWriter, r *http.Request) {
 	err = a.Store.DeleteMessage(messageId)
 	if err != nil {
 		log.Printf("Error deleting message: %s", err)
+		htmx.ErrorToast(w, "Error deleting the message")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

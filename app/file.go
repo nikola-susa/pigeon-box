@@ -22,12 +22,17 @@ func (a *App) HandleCreateFileMessage(w http.ResponseWriter, r *http.Request) {
 
 	userId := r.Context().Value(contextKey("user_id")).(int)
 
-	maxFileSize := a.Config.File.MaxSize << 20
+	maxSizeInt, err := strconv.Atoi(a.Config.File.MaxSize)
+	if err != nil {
+		log.Printf("Error parsing max size: %s", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
 
-	err := r.ParseMultipartForm(a.Config.File.MaxSize << 20)
+	maxFileSize := int64(maxSizeInt) << 20
+
+	err = r.ParseMultipartForm(maxFileSize)
 	if err != nil {
 		log.Printf("Error parsing form: %s", err)
-		htmx.ErrorToast(w, fmt.Sprintf("Error parsing form: %s", err))
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -46,7 +51,6 @@ func (a *App) HandleCreateFileMessage(w http.ResponseWriter, r *http.Request) {
 		f, err := fh.Open()
 		if err != nil {
 			log.Printf("Error opening file: %s", err)
-			htmx.ErrorToast(w, fmt.Sprintf("Error opening file: %s", err))
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -54,7 +58,6 @@ func (a *App) HandleCreateFileMessage(w http.ResponseWriter, r *http.Request) {
 
 		if _, err := buf.ReadFrom(f); err != nil {
 			log.Printf("Error reading file: %s", err)
-			htmx.ErrorToast(w, fmt.Sprintf("Error reading file: %s", err))
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -72,7 +75,7 @@ func (a *App) HandleCreateFileMessage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		threadKey, err := crypt.Decrypt(a.Config.Crypt.Passphrase, []byte(thread.Key))
+		threadKey, err := crypt.Decrypt(a.Config.Crypt.Passphrase, thread.Key)
 
 		byt := buf.Bytes()
 		fn := fmt.Sprintf("%d-%s", time.Now().Unix(), fh.Filename)
@@ -80,7 +83,7 @@ func (a *App) HandleCreateFileMessage(w http.ResponseWriter, r *http.Request) {
 		eByt, err := crypt.Encrypt(string(threadKey), byt)
 		if err != nil {
 			log.Printf("Error encrypting file: %s", err)
-			htmx.ErrorToast(w, fmt.Sprintf("Error encrypting file: %s", err))
+			htmx.ErrorToast(w, fmt.Sprintf("Error encrypting file"))
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -88,7 +91,7 @@ func (a *App) HandleCreateFileMessage(w http.ResponseWriter, r *http.Request) {
 		fp, err := a.Storage.Upload(fn, eByt)
 		if err != nil {
 			log.Printf("Error uploading file: %s", err)
-			htmx.ErrorToast(w, fmt.Sprintf("Error uploading file: %s", err))
+			htmx.ErrorToast(w, fmt.Sprintf("Error uploading file"))
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -107,7 +110,7 @@ func (a *App) HandleCreateFileMessage(w http.ResponseWriter, r *http.Request) {
 		id, err := a.Store.CreateFile(nf)
 		if err != nil {
 			log.Printf("Error creating file: %s", err)
-			htmx.ErrorToast(w, fmt.Sprintf("Error creating file: %s", err))
+			htmx.ErrorToast(w, fmt.Sprintf("Error creating file"))
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -115,13 +118,13 @@ func (a *App) HandleCreateFileMessage(w http.ResponseWriter, r *http.Request) {
 		m := model.CreateMessageParams{
 			UserID:   userId,
 			ThreadID: threadId,
-			Text:     "",
+			Text:     nil,
 		}
 
 		messageId, err := a.Store.CreateMessage(m)
 		if err != nil {
 			log.Printf("Error creating message: %s", err)
-			htmx.ErrorToast(w, fmt.Sprintf("Error creating message: %s", err))
+			htmx.ErrorToast(w, fmt.Sprintf("Error creating message"))
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -129,13 +132,12 @@ func (a *App) HandleCreateFileMessage(w http.ResponseWriter, r *http.Request) {
 		err = a.Store.SetMessageFileID(*messageId, *id)
 		if err != nil {
 			log.Printf("Error setting message file id: %s", err)
-			htmx.ErrorToast(w, fmt.Sprintf("Error setting message file id: %s", err))
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		if thread.MessagesExpiresAt != nil {
-			expiration := time.Now().Add(*thread.MessagesExpiresAt)
+		if thread.MessagesExpireAt != nil {
+			expiration := time.Now().Add(*thread.MessagesExpireAt)
 			err = a.Store.SetMessageExpiresAt(*messageId, expiration)
 		}
 
@@ -210,14 +212,12 @@ func (a *App) HandleDownloadFile(w http.ResponseWriter, r *http.Request) {
 	file, err := a.Store.GetFile(fileId)
 	if err != nil {
 		log.Printf("Error getting file by id: %s", err)
-		htmx.ErrorToast(w, fmt.Sprintf("Error getting file by id: %s", err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if file == nil {
 		log.Printf("Error file not found: %d", fileId)
-		htmx.ErrorToast(w, fmt.Sprintf("Error file not found: %d", fileId))
 		http.Error(w, "file not found", http.StatusNotFound)
 		return
 	}
@@ -235,13 +235,12 @@ func (a *App) HandleDownloadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	threadKey, err := crypt.Decrypt(a.Config.Crypt.Passphrase, []byte(thread.Key))
+	threadKey, err := crypt.Decrypt(a.Config.Crypt.Passphrase, thread.Key)
 	threadKeyStr := string(threadKey)
 
 	dByt, err := a.Storage.Get(*file.Path, &threadKeyStr)
 	if err != nil {
 		log.Printf("Error downloading file: %s", err)
-		htmx.ErrorToast(w, fmt.Sprintf("Error downloading file: %s", err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -258,7 +257,6 @@ func (a *App) HandleDownloadFile(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write(dByt)
 	if err != nil {
 		log.Printf("Error writing file: %s", err)
-		htmx.ErrorToast(w, fmt.Sprintf("Error writing file: %s", err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -268,7 +266,6 @@ func (a *App) HandleDeleteFile(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
 		log.Printf("Error parsing file id: %s", err)
-		htmx.ErrorToast(w, fmt.Sprintf("Error parsing file id: %s", err))
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -276,14 +273,14 @@ func (a *App) HandleDeleteFile(w http.ResponseWriter, r *http.Request) {
 	file, err := a.Store.GetFile(id)
 	if err != nil {
 		log.Printf("Error getting file by id: %s", err)
-		htmx.ErrorToast(w, fmt.Sprintf("Error getting file by id: %s", err))
+		htmx.ErrorToast(w, "Error getting file by id")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if file == nil {
 		log.Printf("Error file not found: %d", id)
-		htmx.ErrorToast(w, fmt.Sprintf("Error file not found: %d", id))
+		htmx.ErrorToast(w, "file not found")
 		http.Error(w, "file not found", http.StatusNotFound)
 		return
 	}
@@ -291,7 +288,7 @@ func (a *App) HandleDeleteFile(w http.ResponseWriter, r *http.Request) {
 	err = a.Storage.Delete(*file.Path)
 	if err != nil {
 		log.Printf("Error deleting file: %s", err)
-		htmx.ErrorToast(w, fmt.Sprintf("Error deleting file: %s", err))
+		htmx.ErrorToast(w, "Error deleting file")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -299,7 +296,7 @@ func (a *App) HandleDeleteFile(w http.ResponseWriter, r *http.Request) {
 	err = a.Store.DeleteFile(id)
 	if err != nil {
 		log.Printf("Error deleting file from db: %s", err)
-		htmx.ErrorToast(w, fmt.Sprintf("Error deleting file from db: %s", err))
+		htmx.ErrorToast(w, "Error deleting file from db")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

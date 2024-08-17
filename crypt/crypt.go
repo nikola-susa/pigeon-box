@@ -30,21 +30,25 @@ func deriveKey(passphrase string, salt []byte) ([]byte, []byte, error) {
 func Encrypt(passphrase string, p []byte) ([]byte, error) {
 	key, salt, err := deriveKey(passphrase, nil)
 	if err != nil {
+		fmt.Printf("Encrypt derive key error: %v", err)
 		return nil, err
 	}
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
+		fmt.Printf("new cipher error: %v", err)
 		return nil, err
 	}
 
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
+		fmt.Printf("new gcm error: %v", err)
 		return nil, err
 	}
 
 	nonce := make([]byte, gcm.NonceSize())
 	if _, err = rand.Read(nonce); err != nil {
+		fmt.Printf("rand read error: %v", err)
 		return nil, err
 	}
 
@@ -59,16 +63,19 @@ func Decrypt(passphrase string, c []byte) ([]byte, error) {
 
 	key, _, err := deriveKey(passphrase, salt)
 	if err != nil {
+		fmt.Println("derive key error", err)
 		return nil, err
 	}
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
+		fmt.Printf("new cipher error: %v", err)
 		return nil, err
 	}
 
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
+		fmt.Printf("new gcm error: %v", err)
 		return nil, err
 	}
 
@@ -76,6 +83,7 @@ func Decrypt(passphrase string, c []byte) ([]byte, error) {
 
 	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
+		fmt.Printf("open error: %v", err)
 		return nil, err
 	}
 	return plaintext, nil

@@ -102,12 +102,23 @@ func (s *SlackAction) CreateThread(payload slack.InteractionCallback) {
 	}
 
 	keyStr, _ := crypt.GenerateKey(32)
-
 	key, err := crypt.Encrypt(s.Config.Crypt.Passphrase, []byte(keyStr))
 	if err != nil {
 		fmt.Println("encrypt", err)
 		return
 	}
+
+	decryptKeyTest, err := crypt.Decrypt(s.Config.Crypt.Passphrase, key)
+	if err != nil {
+		fmt.Println("decrypt key test", err)
+		return
+	}
+	if string(decryptKeyTest) != keyStr {
+		fmt.Println("decrypt key test failed")
+		return
+	}
+
+	fmt.Println("key length", len(key))
 
 	name := payload.Submission["name"]
 	description := "A new secure thread."
@@ -151,13 +162,13 @@ func (s *SlackAction) CreateThread(payload slack.InteractionCallback) {
 	}
 
 	thread := model.Thread{
-		Name:              name,
-		Description:       &description,
-		UserID:            *userId,
-		SlackID:           payload.Channel.ID,
-		Key:               string(key),
-		ExpiresAt:         expireAt,
-		MessagesExpiresAt: msgExpireAt,
+		Name:             name,
+		Description:      &description,
+		UserID:           *userId,
+		SlackID:          payload.Channel.ID,
+		Key:              key,
+		ExpiresAt:        expireAt,
+		MessagesExpireAt: msgExpireAt,
 	}
 
 	id, err := s.Store.CreateThread(thread)

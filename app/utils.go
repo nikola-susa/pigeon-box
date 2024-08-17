@@ -42,7 +42,7 @@ func RenderError(w http.ResponseWriter) {
 }
 
 func HTMXRedirect(w http.ResponseWriter, r *http.Request, url string) {
-	if r.Header.Get("HX-Request") != "" {
+	if IsXHRRequest(r) {
 		w.Header().Set("HX-Redirect", url)
 	} else {
 		http.Redirect(w, r, url, http.StatusSeeOther)
@@ -69,4 +69,32 @@ func ConvertTimeToUserRegion(r *http.Request, t string) (*time.Time, error) {
 	tt := parsedTime.In(loc)
 
 	return &tt, nil
+}
+
+func HTMXEventRedirect(w http.ResponseWriter, r *http.Request, a *App) {
+
+	if IsSSERequest(r) {
+		//threadID := r.PathValue("stream")
+		//if threadID == "" {
+		//	fmt.Print("no sse thread id")
+		//	return
+		//}
+		//
+		//userID := r.PathValue("user")
+		//if userID == "" {
+		//	fmt.Print("no sse user id")
+		//	return
+		//}
+		//
+		//eventName := "logout:" + threadID
+		//a.Event.Broadcast(threadID, []byte(""), &eventName, &userID, nil)
+	}
+}
+
+func IsSSERequest(r *http.Request) bool {
+	return r.Header.Get("Accept") == "text/event-stream"
+}
+
+func IsXHRRequest(r *http.Request) bool {
+	return r.Header.Get("HX-Request") != ""
 }

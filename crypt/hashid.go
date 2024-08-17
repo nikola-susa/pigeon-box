@@ -3,12 +3,15 @@ package crypt
 import (
 	"encoding/hex"
 	"github.com/speps/go-hashids/v2"
+	"strconv"
 )
 
-func HashIDEncodeString(message string, salt string, length int) (string, error) {
+func HashIDEncodeString(message string, salt string, length string) (string, error) {
+	lengthInt, err := strconv.Atoi(length)
+
 	hd := hashids.NewData()
 	hd.Salt = salt
-	hd.MinLength = length
+	hd.MinLength = lengthInt
 	h, _ := hashids.NewWithData(hd)
 
 	userIDHex := hex.EncodeToString([]byte(message))
@@ -21,10 +24,12 @@ func HashIDEncodeString(message string, salt string, length int) (string, error)
 	return res, nil
 }
 
-func HashIDDecodeString(message string, salt string, length int) (string, error) {
+func HashIDDecodeString(message string, salt string, length string) (string, error) {
+	lengthInt, err := strconv.Atoi(length)
+
 	hd := hashids.NewData()
 	hd.Salt = salt
-	hd.MinLength = length
+	hd.MinLength = lengthInt
 	h, _ := hashids.NewWithData(hd)
 
 	resHex, err := h.DecodeHex(message)
@@ -40,10 +45,12 @@ func HashIDDecodeString(message string, salt string, length int) (string, error)
 	return string(res), nil
 }
 
-func HashIDEncodeInt(message int, salt string, length int) (string, error) {
+func HashIDEncodeInt(message int, salt string, length string) (string, error) {
+	lengthInt, err := strconv.Atoi(length)
+
 	hd := hashids.NewData()
 	hd.Salt = salt
-	hd.MinLength = length
+	hd.MinLength = lengthInt
 	h, _ := hashids.NewWithData(hd)
 
 	res, err := h.Encode([]int{message})
@@ -54,10 +61,13 @@ func HashIDEncodeInt(message int, salt string, length int) (string, error) {
 	return res, nil
 }
 
-func HashIDDecodeInt(message string, salt string, length int) (int, error) {
+func HashIDDecodeInt(message string, salt string, length string) (int, error) {
+
+	lengthInt, err := strconv.Atoi(length)
+
 	hd := hashids.NewData()
 	hd.Salt = salt
-	hd.MinLength = length
+	hd.MinLength = lengthInt
 	h, _ := hashids.NewWithData(hd)
 
 	res, err := h.DecodeWithError(message)

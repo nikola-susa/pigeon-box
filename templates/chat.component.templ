@@ -73,19 +73,18 @@ templ EditMessageForm(message model.RenderMessage) {
             <div class="message-input-container py-3">
                 <div class="relative rounded-t bg-primary text-background text-sm mx-3 py-0.5 px-1 flex gap-1.5 items-center justify-between z-50">
                     <div class="flex gap-1.5 items-center ml-0.5">
+
+                        <button tabindex="1" type="button"
+                            class="mr-0.5 flex gap-1.5 items-center"
+                            title="Cancel editing (esc)"
+                            hx-post={ "/t/" + message.ThreadID + "/m/" + message.ID + "/cancel" }
+                            hx-swap="innerHTML"
+                            hx-target="#chat-form"
+                            hx-trigger="click, submit, keyup-escape from:body">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" class="w-3 h-3" fill="currentColor"><path d="M2.22 2.22a.749.749 0 0 1 1.06 0L6 4.939 8.72 2.22a.749.749 0 1 1 1.06 1.06L7.061 6 9.78 8.72a.749.749 0 1 1-1.06 1.06L6 7.061 3.28 9.78a.749.749 0 1 1-1.06-1.06L4.939 6 2.22 3.28a.749.749 0 0 1 0-1.06Z"></path></svg>
+                        </button>
                         <span>Editing a message</span>
-                        <span @click="scrollToMessage($el)" data-message-id={ message.ID }  class="text-xs rounded bg-background/20 hover:bg-background/30 p-0.5 cursor-pointer">#{ message.ID }</span>
                     </div>
-                    <button tabindex="1" type="button"
-                        class="mr-0.5 flex gap-1.5 items-center"
-                        title="Cancel editing (esc)"
-                        hx-post={ "/t/" + message.ThreadID + "/m/" + message.ID + "/cancel" }
-                        hx-swap="innerHTML"
-                        hx-target="#chat-form"
-                        hx-trigger="click, submit, keyup-escape from:body">
-                            <span>Cancel</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" class="w-3 h-3" fill="currentColor"><path d="M2.22 2.22a.749.749 0 0 1 1.06 0L6 4.939 8.72 2.22a.749.749 0 1 1 1.06 1.06L7.061 6 9.78 8.72a.749.749 0 1 1-1.06 1.06L6 7.061 3.28 9.78a.749.749 0 1 1-1.06-1.06L4.939 6 2.22 3.28a.749.749 0 0 1 0-1.06Z"></path></svg>
-                    </button>
                 </div>
                 <div class="mx-3 z-10 relative">
                     <div class="flex flex-col w-full border border-primary rounded-b bg-alt focus-within:border-primary shadow">
@@ -142,7 +141,8 @@ templ ChatBubble(message model.RenderMessage) {
         hx-get={ "/t/" + message.ThreadID + "/m/" + message.ID + "/render" }
         hx-swap="outerHTML"
         hx-trigger={ "MessageUpdated" + message.ID + " from:body" }
-        class={ "chat-item flex gap-3 items-start justify-start hover:bg-sidebar/20 p-3 relative focus:bg-sidebar/20 ring-inset focus:ring-primary/20 focus:ring-1 focus-within:bg-sidebar/20 focus-within:ring-1 focus-within:ring-primary/20" }>
+        x-ref="item"
+        class={ "ease-out chat-item flex gap-3 items-start justify-start hover:bg-sidebar/20 p-3 relative focus:bg-sidebar/20 ring-inset focus:ring-primary/20 focus:ring-1 focus-within:bg-sidebar/20 focus-within:ring-1 focus-within:ring-primary/20" }>
 
         <div class="grow-0 mt-[1px]">
             <div class="w-5 h-5 rounded shadow bg-sidebar relative">
@@ -154,10 +154,10 @@ templ ChatBubble(message model.RenderMessage) {
                 <div class="flex gap-3 items-center">
                     <div class="text-md font-bold text-foreground">{ message.User.Name }</div>
                     <div class="flex gap-0.5 items-center text-alt-foreground font-mono text-sm ">
-                        <div>{ message.CreatedAtFormatted }</div>
+                        <div title={message.CreatedAt}>{ message.CreatedAtFormatted }</div>
                         if message.UpdatedAtFormatted != "" {
                             <div>&middot;</div>
-                            <div>{ message.UpdatedAtFormatted }</div>
+                            <div title={message.UpdatedAt}>{ message.UpdatedAtFormatted }</div>
                         }
                     </div>
                 </div>
