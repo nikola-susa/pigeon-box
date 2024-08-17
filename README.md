@@ -1,35 +1,52 @@
+
+<img align="left" width="30" height="30" style="margin: 21px 10px 0 0" src="https://picsum.photos/100/100">
+
 # Pigeon Box
 
 Pigeon box is a simple, secure, open-source chat application built on top of a Slack workspace bot.
 
 Slack is used only for chat initialization and user authentication, hence Slack never sees the actual chat messages or files shared.
 
+---
+
 ## Motivation
 
-- ##### Slack(Salesforce) wants to use your business data for their AI/ML model training
+1. Secure communication for my team, eliminating the need for matrix/pastebin etc.
+
+2. Recent Slack oopses:
+    ##### Slack(Salesforce) wants to use your business data for their AI/ML model training
     > To develop AI/ML models, our systems analyze Customer Data (e.g. messages, content and files) submitted to Slack.
     
     After the backlash they've tweaked their T&Cs[^1], to be used only for emoji training... Right.
-
-- ##### Disney's Slack data leaked
+    
+    ##### Disney's Slack data leaked
     > The data allegedly includes every message and file from nearly 10,000 channels, including unreleased projects, code, images, login credentials, and links to internal websites and APIs.[^2]
-
+    
     Although not to the fault of their own, the data was allegedly leaked by Disney's employee, it's still a major risk.
 
-- ##### General business needs
-
-    My team shares secure data over self-hosted matrix server, but going back and forth is annoying.
-
-    Pigeon box was built for that specific use-case -- being secure but also easily accessible. 
-
+3. Wanted to play with go,htmx and Slack's _new_ socket mode.
 
 [^1]: https://www.theregister.com/2024/05/20/slack_ts_and_cs_update/
 
 [^2]: https://www.wired.com/story/disney-slack-leak-nullbulge/
 
 
+---
 
 ## Basic deployment instructions
+
+
+
+  * [Slack Bot](#slack-bot)
+  * [Database](#database)
+  * [File Storage](#file-storage)
+  * [Server](#server)
+     * [General](#general)
+     * [Fly.io](#flyio)
+
+
+### Slack Bot
+
 
 
 
@@ -71,7 +88,7 @@ Dockerfile is available, and I'll be adding more deployment instructions soon/as
 This is the easiest[^4] and very cost-effective[^5] way to deploy Pigeon box.
 You can run it on a single `shared-cpu-1x@256MB`[^6] instance with a minimal setup, assuming you're using managed sqlite and cloud storage for files.
 
-[Deploying to fly.io](docs/GUIDES#flyio)
+[Deploying to fly.io](docs/GUIDES.md#flyio)
 
 [^4]: Minimal technical knowledge is required to deploy on fly.io.
 
