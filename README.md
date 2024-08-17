@@ -10,20 +10,15 @@ Slack is used only for chat(thread) initialization and user authentication, henc
 
 ## Motivation
 
-1. Secure communication for my team, eliminating the need for matrix/pastebin etc.
+1. Secure communication for my team, eliminating the need for matrix,pastebin etc.
 
 2. Recent Slack oopses:
     ##### Slack(Salesforce) wants to use your business data for their AI/ML model training
-    > To develop AI/ML models, our systems analyze Customer Data (e.g. messages, content and files) submitted to Slack.
-    
-    After the backlash they've tweaked their T&Cs[^1], to be used only for emoji training... Right.
+    > To develop AI/ML models, our systems analyze Customer Data (e.g. messages, content and files) submitted to Slack.[^1]
     
     ##### Disney's Slack data leaked
     > The data allegedly includes every message and file from nearly 10,000 channels, including unreleased projects, code, images, login credentials, and links to internal websites and APIs.[^2]
-    
-    Although not to the fault of their own, the data was allegedly leaked by Disney's employee, it's still a major risk.
 
-3. Wanted to play around with go, htmx and Slack's _new_ socket mode.
 
 [^1]: https://www.theregister.com/2024/05/20/slack_ts_and_cs_update/
 
@@ -34,12 +29,12 @@ Slack is used only for chat(thread) initialization and user authentication, henc
 
 ## How it works
 
-1. Slack user creates a thread via the bot command or an interaction. They're encouraged to set expiration time for the thread and the messages.
-2. Bot creates a message inviting the other user(s) to the thread.
-3. They're able to request a one time token to access the thread.
-4. Once they click the link, they're authenticated to that thread only and can chat and share files with the other team members in that Slack group.
+1. Slack user creates a thread via the bot command.
+2. Bot creates a message inviting the other slack group user(s) to the thread.
+3. Users are able to request a one time link to access the thread.
+4. After authenticating, they're able to share messages and files securely.
 
-Messages are stored on your server and are deleted after the expiration time. They're encrypted using thread specific keys and are never visible to Slack.
+Messages are stored on your server and are deleted after the set expiration time. They're encrypted using thread specific keys and are never visible to Slack.
 
 <details>
   <summary>User flow visualized</summary>
@@ -56,6 +51,18 @@ Messages are stored on your server and are deleted after the expiration time. Th
 </details>
 
 ---
+
+## Deployment Guides
+
+1. [Slack Bot](docs/GUIDES.md#slack-bot)
+2. [Environment Variables](docs/GUIDES.md#environment-variables)
+3. [Database](docs/GUIDES.md#database)
+4. [Server](docs/GUIDES.md#server)
+5. [File Storage](docs/GUIDES.md#file-storage)
+
+
+---
+
 
 ## Goals
 
@@ -74,14 +81,6 @@ Messages are stored on your server and are deleted after the expiration time. Th
 
 
 ---
-
-## Deployment Guides
-
-1. [Slack Bot](docs/GUIDES.md#slack-bot)
-2. [Environment Variables](docs/GUIDES.md#environment-variables)
-3. [Database](docs/GUIDES.md#database)
-4. [Server](docs/GUIDES.md#server)
-5. [File Storage](docs/GUIDES.md#file-storage)
 
 
 
