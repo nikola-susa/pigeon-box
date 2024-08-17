@@ -1,11 +1,9 @@
 
-<img align="left" width="30" height="30" style="margin: 21px 10px 0 0" src="https://picsum.photos/100/100">
-
 # Pigeon Box
 
 Pigeon box is a simple, secure, open-source chat application built on top of a Slack workspace bot.
 
-Slack is used only for chat initialization and user authentication, hence Slack never sees the actual chat messages or files shared.
+Slack is used only for chat(thread) initialization and user authentication, hence Slack never sees the messages or files shared.
 
 ---
 
@@ -24,7 +22,7 @@ Slack is used only for chat initialization and user authentication, hence Slack 
     
     Although not to the fault of their own, the data was allegedly leaked by Disney's employee, it's still a major risk.
 
-3. Wanted to play with go,htmx and Slack's _new_ socket mode.
+3. Wanted to play around with go, htmx and Slack's _new_ socket mode.
 
 [^1]: https://www.theregister.com/2024/05/20/slack_ts_and_cs_update/
 
@@ -33,7 +31,33 @@ Slack is used only for chat initialization and user authentication, hence Slack 
 
 ---
 
-## Basic deployment instructions
+## How it works
+
+1. Slack user creates a thread via the bot command or an interaction. They're encouraged to set expiration time for the thread and the messages.
+2. Bot creates a message inviting the other user(s) to the thread.
+3. They're able to request a one time token to access the thread.
+4. Once they click the link, they're authenticated to that thread only and can chat and share files with the other team members in that Slack group.
+
+Messages are stored on your server and are deleted after the expiration time. They're encrypted using thread specific keys and are never visible to Slack.
+
+<details>
+  <summary>User flow visualized</summary>
+
+![flow](docs/pigeonbox-flow.jpg "Pigeon Box Flow")
+
+</details>
+
+<details>
+  <summary>Encryption visualized</summary>
+
+![encryption](docs/pigeonbox-encryption.jpg "Pigeon Box Encryption")
+
+</details>
+
+
+---
+
+## Deployment
 
 
 
