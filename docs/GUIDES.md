@@ -1,14 +1,6 @@
 # Guides
 
-Table of Contents
 
-- [Environment Variables](#environment-variables)
-- [Turso](#turso)
-- [Fly.io](#flyio)
-  - [Steps to deploy](#steps-to-deploy)
-  - [Setting up secrets](#setting-up-secrets)
-  
-  
 
 ## Slack Bot
 
@@ -88,22 +80,46 @@ Table of Contents
 ```
 </details>
 
+---
+
+## Database
+
+Pigeon box uses SQLite (libsql) and is compatible with managed SQLite services like [Turso](https://turso.tech/).
+
+I'd _recommend_ going with Turso, it's easy to set up and offers a very generous free tier (as is, it would be entirely free).
+
+If you'd still prefer local SQLite, consider persistent storage[^3].
 
 
-## Environment Variables
+#### Turso
 
-Create a `.env` from the `.env.example` file.
-```bash
-cp .env.example .env
-```
+---
 
-## Turso
+## Server
+
+Pigeon can be deployed almost anywhere.
+
+Keeping in mind, the instance has to be publicly accessible (most of the user interactions are via browser).
 
 
+#### General
 
-## Fly.io
+Dockerfile is available, and I'll be adding more deployment instructions soon/as necessary.
 
-#### Steps to deploy
+
+#### Fly.io
+
+This is the easiest[^4] and very cost-effective[^5] way to deploy Pigeon box.
+You can run it on a single `shared-cpu-1x@256MB`[^6] instance with a minimal setup, assuming you're using managed sqlite and cloud storage for files.
+
+[^4]: Minimal technical knowledge is required to deploy on fly.io.
+
+[^5]: Assuming smallest instance in Ashburn, Virginia (US) region, you'd be looking at [~$1.94/mo](https://fly.io/docs/about/pricing/#started-fly-machines).
+
+[^6]: This is the smallest machine size currently available on fly.io
+
+
+##### Steps to deploy
 
 1. Install the fly CLI (https://fly.io/docs/flyctl/install/) and login.
 2. Launch the app from fly.toml, by running `fly launch`
@@ -120,3 +136,38 @@ chmod +x fly_secrets.sh
 ./fly_secrets.sh
 ```
 
+
+## File Storage
+
+Currently, Pigeon box supports the following file storage options:
+
+- Local (should have persistent storage)
+- AWS S3 (and S3 compatible services like [Tigris](https://www.tigrisdata.com/))
+
+I'd recommend using S3 or a similar service for your deployment
+By default, all files have expiration(auto delete) period, so the cost should be insignificant.
+
+
+Pigeon box is intended for short-lived chats, so even if you don't go with persistent storage, you should be fine in most cases. Just keep in mind that all user data (db, files) will be lost on each machine restart.
+ 
+
+
+
+
+## Environment Variables
+
+Create a `.env` from the `.env.example` file.
+```bash
+cp .env.example .env
+```
+
+
+---
+
+### Development Notes
+
+
+Building styles (tailwind)
+``` bash
+npx tailwindcss -i assets/static/main.css -o assets/static/build.css --watch
+```

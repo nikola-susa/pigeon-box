@@ -5,6 +5,7 @@ Pigeon box is a simple, secure, open-source chat application built on top of a S
 
 Slack is used only for chat(thread) initialization and user authentication, hence Slack never sees the messages or files shared.
 
+
 ---
 
 ## Motivation
@@ -54,79 +55,34 @@ Messages are stored on your server and are deleted after the expiration time. Th
 
 </details>
 
-
 ---
 
-## Deployment
+## Goals
 
-
-
-  * [Slack Bot](#slack-bot)
-  * [Database](#database)
-  * [File Storage](#file-storage)
-  * [Server](#server)
-     * [General](#general)
-     * [Fly.io](#flyio)
-
-
-### Slack Bot
-
-
-
-
-### Database
-
-Pigeon box uses SQLite (libsql) and is compatible with managed SQLite services like [Turso](https://turso.tech/).
-
-I'd _recommend_ going with Turso, it's easy to set up and offers a very generous free tier (as is, it would be entirely free).
-
-If you'd still prefer local SQLite, consider persistent storage[^3].
-
-
-### File Storage
-
-Currently, Pigeon box supports the following file storage options:
-
-- Local (should have persistent storage)[^3]
-- AWS S3 (and S3 compatible services like [Tigris](https://www.tigrisdata.com/))
-
-I'd recommend using S3 or a similar service for your deployment
-By default, all files have expiration(auto delete) period, so the cost should be insignificant.
-
-
-[^3]: Pigeon box is intended for short-lived chats, so even if you don't go with persistent storage, you should be fine in most cases. Just keep in mind that all user data (db, files) will be lost on each machine restart.
-
-
-### Server
-
-Pigeon can be deployed almost anywhere.
-Keeping in mind, the instance has to be publicly accessible (most of the user interactions are via browser).
-
-#### General
-
-Dockerfile is available, and I'll be adding more deployment instructions soon/as necessary.
-
-
-#### Fly.io
-
-This is the easiest[^4] and very cost-effective[^5] way to deploy Pigeon box.
-You can run it on a single `shared-cpu-1x@256MB`[^6] instance with a minimal setup, assuming you're using managed sqlite and cloud storage for files.
-
-[Deploying to fly.io](docs/GUIDES.md#flyio)
-
-[^4]: Minimal technical knowledge is required to deploy on fly.io.
-
-[^5]: Assuming smallest instance in Ashburn, Virginia (US) region, you'd be looking at [~$1.94/mo](https://fly.io/docs/about/pricing/#started-fly-machines).
-
-[^6]: This is the smallest machine size currently available on fly.io
+1. Keeping a good balance between security and usability.
+    - Should be accessible to non-technical users.
+    - Should be secure enough to be used by security-conscious teams.
+2. Making the app very cost-effective to run.
+    - Should be able to run on a single shared instance.
+    - Should be able to run for free or a sub $2/month budget.
+    - Should be able to run on your existing infrastructure.
+3. Crafting a beautiful, responsive and accessible UI.
+    - Should be very easy to use on desktop and mobile.
+    - Should be very intuitive to use and pleasing to the eye.
+    - Should be accessible to screen readers and keyboard users.
+    - Should be very light on user resources.
 
 
 ---
 
-### Development Notes
+## Deployment Guides
 
-Building styles (tailwind)
-``` bash
-npx tailwindcss -i assets/static/main.css -o assets/static/build.css --watch
-```
+1. [Slack Bot](docs/GUIDES.md#slack-bot)
+2. [Environment Variables](docs/GUIDES.md#environment-variables)
+3. [Database](docs/GUIDES.md#database)
+4. [Server](docs/GUIDES.md#server)
+5. [File Storage](docs/GUIDES.md#file-storage)
+
+
+
 
