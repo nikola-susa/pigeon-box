@@ -84,14 +84,16 @@
 
 ## Database
 
-Pigeon box uses SQLite (libsql) and is compatible with managed SQLite services like [Turso](https://turso.tech/).
+Pigeon box uses SQLite (libsql) and is compatible with managed SQLite services.
 
-I'd _recommend_ going with Turso, it's easy to set up and offers a very generous free tier (as is, it would be entirely free).
 
 If you'd still prefer local SQLite, consider persistent storage[^3].
 
 
 #### Turso
+I'd _recommend_ going with Turso, it's easy to set up and offers a very generous free tier (as is, it would be entirely free).
+
+[Turso](https://turso.tech/)
 
 ---
 

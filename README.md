@@ -55,10 +55,10 @@ Messages are stored on your server and are deleted after the set expiration time
 ## Deployment Guides
 
 1. [Slack Bot](docs/GUIDES.md#slack-bot)
-2. [Environment Variables](docs/GUIDES.md#environment-variables)
-3. [Database](docs/GUIDES.md#database)
-4. [Server](docs/GUIDES.md#server)
-5. [File Storage](docs/GUIDES.md#file-storage)
+2. [Database](docs/GUIDES.md#database)
+3. [Server](docs/GUIDES.md#server)
+4. [File Storage](docs/GUIDES.md#file-storage)
+5. [Environment Variables](docs/GUIDES.md#environment-variables)
 
 
 ---
