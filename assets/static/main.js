@@ -82,6 +82,9 @@ function singleChat() {
                 case 'Delete':
                     el.dispatchEvent(new Event('keyup-delete'));
                     break;
+                case 'Backspace':
+                    el.dispatchEvent(new Event('keyup-backspace'));
+                    break;
             }
         }
     }
@@ -105,8 +108,8 @@ function Editor() {
         value: '',
         localStorage: false,
         localKey: 'editorText',
+        addedFiles: new Set(),
         init(autofocus = false, localStorage = false, localKey = 'editorText') {
-
             if (autofocus) {
                 this.$refs.textarea.focus();
                 this.$refs.textarea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -129,6 +132,7 @@ function Editor() {
 
             this.handleInputEvent();
 
+            this.$refs.textarea.addEventListener('paste', this.handlePaste.bind(this));
         },
         resize() {
             const textarea = this.$refs.textarea;
@@ -149,16 +153,35 @@ function Editor() {
                 this.handleInputEvent();
             }
         },
-        scrollToMessage($el) {
-            const attribute = $el.getAttribute('data-message-id');
-            const element = document.getElementById(`m-${attribute}`);
-            if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-        },
         fileUpload() {
             const input = document.getElementById('files-input');
             input.click();
+        },
+        async handlePaste(event) {
+            const items = (event.clipboardData || window.clipboardData).items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].kind === 'file') {
+                    const file = items[i].getAsFile();
+                    const fileHash = await this.hashFile(file);
+                    if (!this.addedFiles.has(fileHash)) {
+                        this.addedFiles.add(fileHash);
+                        const input = document.getElementById('files-input');
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        input.files = dataTransfer.files;
+
+                        const changeEvent = new Event('change');
+                        input.dispatchEvent(changeEvent);
+                    }
+                    break;
+                }
+            }
+        },
+        async hashFile(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
     }
 }

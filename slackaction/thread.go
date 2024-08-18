@@ -118,8 +118,6 @@ func (s *SlackAction) CreateThread(payload slack.InteractionCallback) {
 		return
 	}
 
-	fmt.Println("key length", len(key))
-
 	name := payload.Submission["name"]
 	description := "A new secure thread."
 	expirationTime := 0

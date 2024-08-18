@@ -1,12 +1,8 @@
 # Guides
 
-
-
 ## Slack Bot
 
-#### Installing the Slack app
-
-##### Creating a new app flow
+### Creating a new app flow
 
 :one: https://api.slack.com/apps
 
@@ -102,7 +98,7 @@
 
 :six: Click "Create"
 
-##### Configuring the app
+### Configuring the app
 
 :one: From "Basic Information" page, scroll down to "App-Level Tokens" and click "Generate Token and Scopes", select "connections:write" scope and click "Generate"
 
@@ -133,7 +129,7 @@
 </details>
 
 
-##### Install app to workspace
+### Install app to workspace
 
 :one: From the "Install App" page, click "Install to Workspace"
 
