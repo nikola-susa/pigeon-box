@@ -71,7 +71,7 @@ Messages are stored on your server and are deleted after the set expiration time
     - Should be secure enough to be used by security-conscious teams.
 2. Making the app very cost-effective to run.
     - Should be able to run on a single shared instance.
-    - Should be able to run for free or a sub $2/month budget.
+    - Should be able to run for free or on a sub $5/month budget.
     - Should be able to run on your existing infrastructure.
 3. Crafting a beautiful, responsive and accessible UI.
     - Should be very easy to use on desktop and mobile.
