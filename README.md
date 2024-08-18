@@ -3,14 +3,16 @@
 
 Pigeon box is a simple, secure, open-source chat application built on top of a Slack workspace bot.
 
-Slack is used only for chat(thread) initialization and user authentication, hence Slack never sees the messages or files shared.
+Slack is used only for chat(thread) initialization and user authentication, hence Slack never sees the shared messages or files.
+
+Pigeon box is not a Slack alternative, but an extension.
 
 
 ---
 
 ## Motivation
 
-1. Secure communication for my team, eliminating the need for matrix,pastebin etc.
+1. Secure communication channel for my team, eliminating the need for matrix,pastebin etc.
 
 2. Recent Slack oopses:
     ##### Slack(Salesforce) wants to use your business data for their AI/ML model training
@@ -66,16 +68,15 @@ Messages are stored on your server and are deleted after the set expiration time
 
 ## Goals
 
-1. Keeping a good balance between security and usability.
+1. Good balance between security and usability.
     - Should be accessible to non-technical users.
     - Should be secure enough to be used by security-conscious teams.
-2. Making the app very cost-effective to run.
+2. Very cheap to run.
     - Should be able to run on a single shared instance.
     - Should be able to run for free or on a sub $5/month budget.
-    - Should be able to run on your existing infrastructure.
+    - Should be able to run on your existing infrastructure (if you have spare resources).
 3. Crafting a beautiful, responsive and accessible UI.
-    - Should be very easy to use on desktop and mobile.
-    - Should be very intuitive to use and pleasing to the eye.
+    - Should be very intuitive and pleasing to the eye.
     - Should be accessible to screen readers and keyboard users.
     - Should be very light on user resources.
 
