@@ -158,6 +158,9 @@ function Editor() {
             input.click();
         },
         async handlePaste(event) {
+
+            event.preventDefault();
+
             const items = (event.clipboardData || window.clipboardData).items;
             for (let i = 0; i < items.length; i++) {
                 if (items[i].kind === 'file') {
@@ -174,6 +177,9 @@ function Editor() {
                         input.dispatchEvent(changeEvent);
                     }
                     break;
+                } else {
+                    const text = (event.clipboardData || window.clipboardData).getData('text');
+                    document.execCommand('insertText', false, text);
                 }
             }
         },
