@@ -4,9 +4,29 @@
 
 ## Slack Bot
 
+#### Installing the Slack app
+
+##### Creating a new app flow
+
+:one: https://api.slack.com/apps
+
+:two: Click "Create New App"
+
+:three: Select "From Manifest"
+
+:four: Select your workspace 
+
+:five: Copy the "App Manifest" (below) content and paste it in the editor
 
 <details>
-  <summary>App Manifest</summary>
+<summary>App Manifest (screenshots)</summary>
+
+![app-manifest-init](slack-manifest-1.png "Slack app manifest initial")
+
+![app-manifest](slack-manifest-2.png "Slack app manifest configured")
+
+</details>
+
 
 ``` yaml
 {
@@ -78,6 +98,58 @@
     }
 }
 ```
+
+
+:six: Click "Create"
+
+##### Configuring the app
+
+:one: From "Basic Information" page, scroll down to "App-Level Tokens" and click "Generate Token and Scopes", select "connections:write" scope and click "Generate"
+
+<details>
+<summary>Generate token (screenshots) </summary>
+
+![app-token](slack-app-token.png "Slack app token")
+
+![app-token-gen](slack-app-token-gen.png "Slack app token generated")
+
+![app-token-copy](slack-app-token-copy.png "Slack app token copied")
+
+</details>
+
+
+:two: Copy the token and add it to your `.env` file as `SLACK_APP_TOKEN`
+
+
+:three: Optional: Upload the app icon and cover image from the "Display Information" page
+
+<details>
+<summary>Upload App icon</summary>
+
+![app-icon-upload](slack-app-bot-style.png "Slack app icon upload")
+
+![app-icon](logo-slack.png "Slack app icon")
+
+</details>
+
+
+##### Install app to workspace
+
+:one: From the "Install App" page, click "Install to Workspace"
+
+:two: Authorize the app
+
+:three: Copy the OAuth Token > Bot User OAuth Token and add it to your `.env` file as `SLACK_BOT_TOKEN`
+
+<details>
+<summary>App install (screenshots)</summary>
+
+![slack-app-install](slack-app-install.png "Slack app install")
+
+![slack-app-install-allow](slack-app-install-allow.png "Slack app install allow")
+
+![slack-bot-token](slack-bot-token.png "Slack bot token")
+
 </details>
 
 ---
@@ -111,14 +183,14 @@ Dockerfile is available, and I'll be adding more deployment instructions soon/as
 
 #### Fly.io
 
-This is the easiest[^4] and very cost-effective[^5] way to deploy Pigeon box.
-You can run it on a single `shared-cpu-1x@256MB`[^6] instance with a minimal setup, assuming you're using managed sqlite and cloud storage for files.
+This is the easiest[^1] and very cost-effective[^2] way to deploy Pigeon box.
+You can run it on a single `shared-cpu-1x@256MB`[^3] instance with a minimal setup, assuming you're using managed sqlite and cloud storage for files.
 
-[^4]: Minimal technical knowledge is required to deploy on fly.io.
+[^1]: Minimal technical knowledge is required to deploy on fly.io.
 
-[^5]: Assuming smallest instance in Ashburn, Virginia (US) region, you'd be looking at [~$1.94/mo](https://fly.io/docs/about/pricing/#started-fly-machines).
+[^2]: Assuming smallest instance in Ashburn, Virginia (US) region, you'd be looking at [~$1.94/mo](https://fly.io/docs/about/pricing/#started-fly-machines).
 
-[^6]: This is the smallest machine size currently available on fly.io
+[^3]: This is the smallest machine size currently available on fly.io
 
 
 ##### Steps to deploy
@@ -144,15 +216,14 @@ chmod +x fly_secrets.sh
 Currently, Pigeon box supports the following file storage options:
 
 - Local (should have persistent storage)
-- AWS S3 (and S3 compatible services like [Tigris](https://www.tigrisdata.com/))
+- AWS S3 (and S3 compatible services like Tigris)
 
 I'd recommend using S3 or a similar service for your deployment
 By default, all files have expiration(auto delete) period, so the cost should be insignificant.
 
-
+<sup>
 Pigeon box is intended for short-lived chats, so even if you don't go with persistent storage, you should be fine in most cases. Just keep in mind that all user data (db, files) will be lost on each machine restart.
- 
-
+</sup>
 
 
 
@@ -163,6 +234,7 @@ Create a `.env` from the `.env.example` file.
 cp .env.example .env
 ```
 
+Env names should be self-explanatory, and if not there are helpful comments in the file.
 
 ---
 

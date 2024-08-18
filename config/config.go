@@ -17,9 +17,8 @@ type Config struct {
 		Port string `envconfig:"SERVER_PORT" default:"8081"`
 	}
 	Slack struct {
-		AppToken          string `envconfig:"SLACK_APP_TOKEN" required:"true"`
-		BotToken          string `envconfig:"SLACK_BOT_TOKEN" required:"true"`
-		VerificationToken string `envconfig:"SLACK_BOT_VERIFICATION_TOKEN" required:"true"`
+		AppToken string `envconfig:"SLACK_APP_TOKEN" required:"true"`
+		BotToken string `envconfig:"SLACK_BOT_TOKEN" required:"true"`
 	}
 	Database struct {
 		URL string `envconfig:"DATABASE_URL" default:"file:./local.db"`
