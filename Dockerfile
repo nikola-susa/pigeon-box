@@ -2,7 +2,7 @@ FROM golang:alpine AS build
 WORKDIR /src
 RUN apk --no-cache add ca-certificates git
 COPY . .
-RUN rm README.md package.json package-lock.json logo.svg tailwind.config.js -r docs
+RUN rm README.md package.json package-lock.json tailwind.config.js -r docs
 RUN go mod download
 RUN GOOS=linux CGO_ENABLED=0 go build -o bot
 
