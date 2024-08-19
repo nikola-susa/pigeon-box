@@ -8,9 +8,9 @@ Slack is used only for chat(thread) initialization and user authentication, henc
 Pigeon box is not an alternate to Slack, but an extension.
 
 
-![flow](docs/pigeon-box-init.gif "Pigeon Box Flow")
+![flow](docs/pigeon-box-preview(30fps).gif "Pigeon Box Flow")
 
-[flow preview](https://youtu.be/yIrGeJUBCTk)
+[flow preview](https://youtu.be/cNoxju0PtXc)
 
 
 ---
