@@ -72,6 +72,8 @@ func (a *App) Serve() error {
 		return
 	})
 
+	mux.Handle("GET /fake/{thread_id}/{user_id}", http.HandlerFunc(a.HandleFakeAuth)) //TODO: remove this after testing
+
 	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
 		component := templates.HomePage()
 		err := component.Render(r.Context(), w)

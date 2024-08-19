@@ -5,7 +5,12 @@ Pigeon box is a simple, secure, open-source chat application built on top of a S
 
 Slack is used only for chat(thread) initialization and user authentication, hence Slack never sees the shared messages or files.
 
-Pigeon box is not a Slack alternative, but an extension.
+Pigeon box is not an alternate to Slack, but an extension.
+
+
+![flow](docs/pigeon-box-init.gif "Pigeon Box Flow")
+
+[flow preview](https://youtu.be/yIrGeJUBCTk)
 
 
 ---

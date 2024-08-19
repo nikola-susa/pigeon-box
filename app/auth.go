@@ -3,8 +3,10 @@ package app
 import (
 	"fmt"
 	"github.com/nikola-susa/pigeon-box/crypt"
+	"github.com/nikola-susa/pigeon-box/model"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -131,4 +133,36 @@ func (a *App) HandleDeleteSession(w http.ResponseWriter, r *http.Request) {
 
 	HTMXRedirect(w, r, "/not-authenticated")
 	return
+}
+
+func (a *App) HandleFakeAuth(w http.ResponseWriter, r *http.Request) {
+	threadId := r.PathValue("thread_id")
+	userId := r.PathValue("user_id")
+
+	threadIdInt, _ := strconv.Atoi(threadId)
+	userIdInt, _ := strconv.Atoi(userId)
+
+	hashedThreadID, _ := crypt.HashIDEncodeInt(threadIdInt, a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
+
+	session := model.Session{
+		ThreadID:  threadIdInt,
+		UserID:    userIdInt,
+		ExpiresAt: time.Now().Add(24 * time.Hour),
+	}
+
+	sessionId, _ := a.Store.CreateSession(session)
+
+	hashedSessionID, _ := crypt.HashIDEncodeInt(*sessionId, a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_token",
+		Value:    hashedSessionID,
+		Expires:  time.Now().Add(24 * time.Hour),
+		Path:     fmt.Sprintf("/t/%s", hashedThreadID),
+		SameSite: http.SameSiteLaxMode,
+		Secure:   true,
+	})
+
+	redirectURL := fmt.Sprintf("/t/%s", hashedThreadID)
+	http.Redirect(w, r, redirectURL, http.StatusFound)
 }

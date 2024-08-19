@@ -3,9 +3,9 @@ package store
 import (
 	"context"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/nikola-susa/pigeon-box/config"
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
+	_ "modernc.org/sqlite"
 )
 
 type Store struct {

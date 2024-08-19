@@ -154,14 +154,9 @@
 
 Pigeon box uses SQLite (libsql) and is compatible with managed SQLite services.
 
+Turso is a good option for managed SQLite, and free for small instances.
 
-If you'd still prefer local SQLite, consider persistent storage[^3].
-
-
-#### Turso
-I'd _recommend_ going with Turso, it's easy to set up and offers a very generous free tier (as is, it would be entirely free).
-
-[Turso](https://turso.tech/)
+If you'd still prefer local SQLite, consider persistent storage.
 
 ---
 
@@ -184,7 +179,7 @@ You can run it on a single `shared-cpu-1x@256MB`[^3] instance with a minimal set
 
 [^1]: Minimal technical knowledge is required to deploy on fly.io.
 
-[^2]: Assuming smallest instance in Ashburn, Virginia (US) region, you'd be looking at [~$1.94/mo](https://fly.io/docs/about/pricing/#started-fly-machines).
+[^2]: Assuming smallest instance in Ashburn, Virginia (US) region, you'd be looking at ~$1.94/mo.
 
 [^3]: This is the smallest machine size currently available on fly.io
 
