@@ -132,6 +132,8 @@ function Editor() {
 
             this.handleInputEvent();
 
+            this.$refs.textarea.removeEventListener('paste')
+
             this.$refs.textarea.addEventListener('paste', this.handlePaste.bind(this));
         },
         resize() {
