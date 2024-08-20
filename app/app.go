@@ -49,6 +49,7 @@ func (a *App) Serve() error {
 
 	mux.Handle("GET /t/{thread_id}/slack/info", AuthMiddleware(a)(http.HandlerFunc(a.HandleThreadSlackDetails)))
 	mux.Handle("GET /t/{thread_id}/slack/workspace", AuthMiddleware(a)(http.HandlerFunc(a.HandleThreadSlackWorkspace)))
+	mux.Handle("GET /t/{thread_id}/presence", AuthMiddleware(a)(http.HandlerFunc(a.HandleThreadPresence)))
 
 	mux.Handle("GET /t/{thread_id}/m", AuthMiddleware(a)(http.HandlerFunc(a.HandleGetMessages)))
 	mux.Handle("POST /t/{thread_id}/m", AuthMiddleware(a)(http.HandlerFunc(a.HandleCreateNewMessage)))

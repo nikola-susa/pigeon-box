@@ -7,7 +7,7 @@ import (
 )
 
 func (w *Worker) clearSessions() {
-	ticker := time.NewTicker(3 * time.Minute)
+	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
 
 	for {

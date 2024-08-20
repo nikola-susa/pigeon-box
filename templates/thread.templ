@@ -79,10 +79,14 @@ templ Home(thread model.RenderThread, id string, user model.RenderUser) {
                             </div>
 
                             <div>
-                                <div class="flex items-center gap-3 px-0.5">
+                                <div class="flex items-center gap-1.5 px-0.5">
+
+                                    <div hx-get={ "/t/" + id + "/presence?i=3" } hx-trigger="every 3s" hx-swap="outerHTML">
+                                    </div>
+
                                     <div class="grow-0 mt-[1px]" x-data="{ open: false, timeout: null }" @mouseleave="timeout = setTimeout(() => { open = false }, 700)" @click="open = true; clearTimeout(timeout)">
-                                        <div class="w-5 h-5 rounded shadow bg-sidebar relative cursor-pointer"  x-ref="profile">
-                                            <img src={ user.Avatar } class="absolute inset-0 rounded flex justify-center items-center text-sm text-primary" alt={ user.Username } loading="lazy"/>
+                                        <div class="w-5 h-5 bg-border text-alt-foreground rounded shadow bg-sidebar/70 relative cursor-pointer flex justify-center items-center"  x-ref="profile">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" class="w-4 h-4" fill="currentColor"><path d="M10.561 8.073a6.005 6.005 0 0 1 3.432 5.142.75.75 0 1 1-1.498.07 4.5 4.5 0 0 0-8.99 0 .75.75 0 0 1-1.498-.07 6.004 6.004 0 0 1 3.431-5.142 3.999 3.999 0 1 1 5.123 0ZM10.5 5a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0Z"></path></svg>
                                         </div>
                                          <div x-show="open" x-anchor.bottom-start="$refs.profile" role="tooltip" @click.outside="open = false" class="relative z-[999] min-w-48 bg-black p-3 text-foreground border rounded-lg" style="display: none;">
                                             <div class="flex flex-col gap-0.5 text-foreground">
@@ -182,6 +186,40 @@ templ Home(thread model.RenderThread, id string, user model.RenderUser) {
 
 templ SlackWorkspace(name string) {
     <div>Workspace <span class="text-primary">{ name }</span></div>
+}
+
+templ ThreadPresence(users []model.RenderUser, preview []model.RenderUser, count string, threadId string, iteration string) {
+    <div x-data="{ open: false, timeout: null }" @mouseleave="timeout = setTimeout(() => { open = false }, 700)" @click="open = true; clearTimeout(timeout)">
+        <div hx-get={ "/t/" + threadId + "/presence?i=" + iteration } hx-trigger={"every " + iteration + "s"} hx-swap="outerHTML" x-ref="users">
+            <div class="flex items-center gap-0.5 rounded ring ring-[1px] ring-border p-0.5">
+                <ul class="isolate avatar-list gap-0.5">
+                   for _, user := range preview {
+                        <li class="w-4 h-4 ring-2 ring-background rounded shadow bg-sidebar relative cursor-pointer">
+                            <img src={ user.Avatar } class="absolute inset-0 rounded flex justify-center items-center text-sm text-primary" alt={ user.Username } loading="lazy"/>
+                        </li>
+                  }
+                </ul>
+                <div class="flex items-center justify-center items-center text-sm text-alt-foreground font-mono bg-border/70 rounded w-4 h-4">
+                    { count }
+                </div>
+            </div>
+        </div>
+        <div x-show="open" x-anchor.bottom-start="$refs.users" role="tooltip" @click.outside="open = false" class="absolute z-[999] min-w-48 bg-black text-foreground border rounded-lg" style="display: none;">
+            <div class="flex flex-col gap-0.5 text-foreground max-h-[550px]] max-h-[60dvh] overflow-x-auto p-3">
+                <div class="text-sm pb-1.5 text-alt-foreground">Currently present ({count})</div>
+                <div class="flex flex-col gap-1.5">
+                    for _, user := range users {
+                        <div class="flex items-center gap-0.5">
+                            <div class="w-4 h-4 bg-border text-alt-foreground rounded shadow bg-sidebar relative cursor-pointer">
+                                <img src={ user.Avatar } class="absolute inset-0 rounded flex justify-center items-center text-sm text-primary" alt={ user.Username } loading="lazy"/>
+                            </div>
+                            <div class="text-sm truncate">{ user.Name }</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
 }
 
 templ chatSkeli() {

@@ -416,3 +416,86 @@ func (a *App) HandleThreadSlackWorkspace(w http.ResponseWriter, r *http.Request)
 	}
 
 }
+
+func (a *App) HandleThreadPresence(w http.ResponseWriter, r *http.Request) {
+
+	threadId := r.PathValue("thread_id")
+	iteration := r.URL.Query().Get("i")
+
+	iterationInt, err := strconv.Atoi(iteration)
+
+	presentHashes := a.Event.PresentUsers(threadId)
+	presentUsersCount := strconv.Itoa(len(presentHashes))
+
+	hashSet := make(map[string]struct{})
+	for _, hash := range presentHashes {
+		hashSet[hash] = struct{}{}
+	}
+
+	uniquePresentHashes := make([]string, 0, len(hashSet))
+	for hash := range hashSet {
+		uniquePresentHashes = append(uniquePresentHashes, hash)
+	}
+
+	var presentUsers []model.RenderUser
+	var previewUsers []model.RenderUser
+
+	for index, hash := range uniquePresentHashes {
+		userId, err := crypt.HashIDDecodeInt(hash, a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
+		if err != nil {
+			log.Printf("Error decoding user id: %s", err)
+			continue
+		}
+
+		user, err := a.Store.GetUser(userId)
+		if err != nil {
+			log.Printf("Error getting user by id: %s", err)
+			continue
+		}
+
+		if user == nil {
+			log.Printf("Error user not found: %d", userId)
+			continue
+		}
+
+		hashedUserId, err := crypt.HashIDEncodeInt(userId, a.Config.Crypt.HashSalt, a.Config.Crypt.HashLength)
+		if err != nil {
+			log.Printf("Error hashing user id: %s", err)
+			continue
+		}
+
+		presentUsers = append(presentUsers, model.RenderUser{
+			ID:       hashedUserId,
+			Name:     *user.Name,
+			Username: *user.Username,
+			Avatar:   *user.Avatar,
+		})
+
+		if index < 3 {
+			previewUsers = append(previewUsers, model.RenderUser{
+				ID:       hashedUserId,
+				Name:     *user.Name,
+				Username: *user.Username,
+				Avatar:   *user.Avatar,
+			})
+		}
+	}
+
+	newIter := "180"
+	switch iterationInt {
+	case 1, 2, 3, 4, 5, 6:
+		newIter = "15"
+	case 7, 8, 9:
+		newIter = "60"
+	case 10, 11, 12:
+		newIter = "120"
+
+	}
+
+	component := templates.ThreadPresence(presentUsers, previewUsers, presentUsersCount, threadId, newIter)
+	err = component.Render(r.Context(), w)
+	if err != nil {
+		return
+	}
+
+}

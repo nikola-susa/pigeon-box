@@ -15,7 +15,7 @@ import (
 )
 
 func Parse(md []byte) []byte {
-	extensions := parser.CommonExtensions | parser.NoEmptyLineBeforeBlock
+	extensions := parser.CommonExtensions | parser.NoEmptyLineBeforeBlock | parser.HardLineBreak
 	p := parser.NewWithExtensions(extensions)
 
 	opts := mdhtml.RendererOptions{

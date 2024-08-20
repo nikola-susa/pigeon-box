@@ -93,7 +93,6 @@ func EventMiddleware(a *App) func(next http.Handler) http.Handler {
 
 			session, err := a.Store.GetSession(token)
 			if err != nil {
-				fmt.Println("token", token)
 				HTMXEventRedirect(w, r, a)
 				return
 			}
