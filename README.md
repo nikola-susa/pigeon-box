@@ -20,16 +20,19 @@ Pigeon box is not an alternate to Slack, but an extension.
 1. Secure communication channel for my team, eliminating the need for matrix,pastebin etc.
 
 2. Recent Slack oopses:
+    ##### Slack LLM leaking private channel information [^1]
+
     ##### Slack(Salesforce) wants to use your business data for their AI/ML model training
-    > To develop AI/ML models, our systems analyze Customer Data (e.g. messages, content and files) submitted to Slack.[^1]
+    > To develop AI/ML models, our systems analyze Customer Data (e.g. messages, content and files) submitted to Slack.[^2]
     
     ##### Disney's Slack data leaked
-    > The data allegedly includes every message and file from nearly 10,000 channels, including unreleased projects, code, images, login credentials, and links to internal websites and APIs.[^2]
+    > The data allegedly includes every message and file from nearly 10,000 channels, including unreleased projects, code, images, login credentials, and links to internal websites and APIs.[^3]
 
+[^1]: https://promptarmor.substack.com/p/data-exfiltration-from-slack-ai-via
 
-[^1]: https://www.theregister.com/2024/05/20/slack_ts_and_cs_update/
+[^2]: https://www.theregister.com/2024/05/20/slack_ts_and_cs_update/
 
-[^2]: https://www.wired.com/story/disney-slack-leak-nullbulge/
+[^3]: https://www.wired.com/story/disney-slack-leak-nullbulge/
 
 
 ---
