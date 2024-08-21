@@ -342,7 +342,7 @@ func Home(thread model.RenderThread, id string, user model.RenderUser) templ.Com
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-trigger=\"revealed\" class=\"relative mx-1.5\" hx-swap=\"outerHTML\">")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-trigger=\"revealed\" class=\"relative mx-1.5 space-y-6\" hx-swap=\"outerHTML\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -484,14 +484,14 @@ func ThreadPresence(users []model.RenderUser, preview []model.RenderUser, count 
 			templ_7745c5c3_Var27 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div x-data=\"{ open: false, timeout: null }\" @mouseleave=\"timeout = setTimeout(() =&gt; { open = false }, 700)\" @click=\"open = true; clearTimeout(timeout)\"><div hx-get=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div hx-get=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs("/t/" + threadId + "/presence?i=" + iteration)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/thread.templ`, Line: 193, Col: 67}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/thread.templ`, Line: 192, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
@@ -504,56 +504,66 @@ func ThreadPresence(users []model.RenderUser, preview []model.RenderUser, count 
 		var templ_7745c5c3_Var29 string
 		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs("every " + iteration + "s")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/thread.templ`, Line: 193, Col: 108}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/thread.templ`, Line: 192, Col: 104}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-swap=\"outerHTML\" x-ref=\"users\"><div class=\"flex items-center gap-0.5 rounded ring ring-[1px] ring-border p-0.5\"><ul class=\"isolate avatar-list gap-0.5\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-sync=\"this:replace\" hx-swap=\"outerHTML\" x-data=\"{ open: false, timeout: null }\" @mouseleave=\"timeout = setTimeout(() =&gt; { open = false }, 700)\" @click=\"open = true; clearTimeout(timeout)\"><div x-ref=\"users\"><div class=\"flex items-center gap-0.5 rounded ring ring-[1px] ring-border p-0.5\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		for _, user := range preview {
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<li class=\"w-4 h-4 ring-2 ring-background rounded shadow bg-sidebar relative cursor-pointer\"><img src=\"")
+		if count != "0" {
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<ul class=\"isolate avatar-list gap-0.5\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var30 string
-			templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(user.Avatar)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/thread.templ`, Line: 198, Col: 50}
+			for _, user := range preview {
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<li class=\"w-4 h-4 ring-2 ring-background rounded shadow bg-sidebar relative\"><img src=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var30 string
+				templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(user.Avatar)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/thread.templ`, Line: 200, Col: 54}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" class=\"absolute inset-0 rounded flex justify-center items-center text-sm text-primary\" alt=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var31 string
+				templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(user.Username)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/thread.templ`, Line: 200, Col: 163}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" loading=\"lazy\"></li>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" class=\"absolute inset-0 rounded flex justify-center items-center text-sm text-primary\" alt=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var31 string
-			templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(user.Username)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/thread.templ`, Line: 198, Col: 159}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" loading=\"lazy\"></li>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</ul>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</ul><div class=\"flex items-center justify-center items-center text-sm text-alt-foreground font-mono bg-border/70 rounded w-4 h-4\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"flex items-center justify-center items-center text-sm text-alt-foreground font-mono bg-border/70 rounded w-4 h-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var32 string
 		templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(count)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/thread.templ`, Line: 203, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/thread.templ`, Line: 206, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 		if templ_7745c5c3_Err != nil {
@@ -566,7 +576,7 @@ func ThreadPresence(users []model.RenderUser, preview []model.RenderUser, count 
 		var templ_7745c5c3_Var33 string
 		templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(count)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/thread.templ`, Line: 209, Col: 89}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/thread.templ`, Line: 212, Col: 89}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 		if templ_7745c5c3_Err != nil {
@@ -584,7 +594,7 @@ func ThreadPresence(users []model.RenderUser, preview []model.RenderUser, count 
 			var templ_7745c5c3_Var34 string
 			templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(user.Avatar)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/thread.templ`, Line: 214, Col: 54}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/thread.templ`, Line: 217, Col: 54}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 			if templ_7745c5c3_Err != nil {
@@ -597,7 +607,7 @@ func ThreadPresence(users []model.RenderUser, preview []model.RenderUser, count 
 			var templ_7745c5c3_Var35 string
 			templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(user.Username)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/thread.templ`, Line: 214, Col: 163}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/thread.templ`, Line: 217, Col: 163}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
 			if templ_7745c5c3_Err != nil {
@@ -610,7 +620,7 @@ func ThreadPresence(users []model.RenderUser, preview []model.RenderUser, count 
 			var templ_7745c5c3_Var36 string
 			templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(user.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/thread.templ`, Line: 216, Col: 69}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/thread.templ`, Line: 219, Col: 69}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
 			if templ_7745c5c3_Err != nil {
@@ -647,7 +657,7 @@ func chatSkeli() templ.Component {
 			templ_7745c5c3_Var37 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"rounded border shadow p-3 mx-1.5 mb-1.5\"><div class=\"animate-pulse flex space-x-3\"><div class=\"rounded bg-sidebar h-5 w-5\"></div><div class=\"flex-1 space-y-3 py-1\"><div class=\"h-2 bg-alt rounded\"></div><div class=\"space-y-3\"><div class=\"grid grid-cols-3 gap-4\"><div class=\"h-2 bg-alt rounded col-span-2\"></div><div class=\"h-2 bg-alt rounded col-span-1\"></div></div></div></div></div></div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"mx-1.5 mb-1.5\"><div class=\"animate-pulse flex space-x-3\"><div class=\"rounded bg-sidebar/70 h-5 w-5\"></div><div class=\"flex-1 space-y-3 py-1\"><div class=\"h-2 w-12 bg-sidebar/50 rounded\"></div><div class=\"space-y-3\"><div class=\"h-2 bg-sidebar/30 rounded\"></div><div class=\"h-2 bg-sidebar/40 rounded\"></div></div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

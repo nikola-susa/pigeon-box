@@ -46,7 +46,7 @@ func (w *Worker) collectExpiredSessions() {
 }
 
 func (w *Worker) clearMessages() {
-	ticker := time.NewTicker(30 * time.Minute)
+	ticker := time.NewTicker(10 * time.Minute)
 	defer ticker.Stop()
 
 	for {

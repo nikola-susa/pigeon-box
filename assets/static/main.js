@@ -102,13 +102,36 @@ function drop(e) {
 
 }
 
+function handlePaste(event) {
+    const items = (event.clipboardData || window.clipboardData).items;
+    let fileFound = false;
+
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].kind === 'file') {
+            fileFound = true;
+            const file = items[i].getAsFile();
+            const input = document.getElementById('files-input');
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            input.files = dataTransfer.files;
+
+            const changeEvent = new Event('change');
+            input.dispatchEvent(changeEvent);
+            break;
+        }
+    }
+
+    if (fileFound) {
+        event.preventDefault();
+    }
+}
+
 
 function Editor() {
     return {
         value: '',
         localStorage: false,
         localKey: 'editorText',
-        addedFiles: new Set(),
         init(autofocus = false, localStorage = false, localKey = 'editorText') {
             if (autofocus) {
                 this.$refs.textarea.focus();
@@ -131,10 +154,6 @@ function Editor() {
             }, 10);
 
             this.handleInputEvent();
-
-            this.$refs.textarea.removeEventListener('paste')
-
-            this.$refs.textarea.addEventListener('paste', this.handlePaste.bind(this));
         },
         resize() {
             const textarea = this.$refs.textarea;
@@ -158,38 +177,6 @@ function Editor() {
         fileUpload() {
             const input = document.getElementById('files-input');
             input.click();
-        },
-        async handlePaste(event) {
-
-            event.preventDefault();
-
-            const items = (event.clipboardData || window.clipboardData).items;
-            for (let i = 0; i < items.length; i++) {
-                if (items[i].kind === 'file') {
-                    const file = items[i].getAsFile();
-                    const fileHash = await this.hashFile(file);
-                    if (!this.addedFiles.has(fileHash)) {
-                        this.addedFiles.add(fileHash);
-                        const input = document.getElementById('files-input');
-                        const dataTransfer = new DataTransfer();
-                        dataTransfer.items.add(file);
-                        input.files = dataTransfer.files;
-
-                        const changeEvent = new Event('change');
-                        input.dispatchEvent(changeEvent);
-                    }
-                    break;
-                } else {
-                    const text = (event.clipboardData || window.clipboardData).getData('text');
-                    document.execCommand('insertText', false, text);
-                }
-            }
-        },
-        async hashFile(file) {
-            const arrayBuffer = await file.arrayBuffer();
-            const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
     }
 }
@@ -372,6 +359,8 @@ function init() {
     });
 
     document.body.addEventListener("showToast", onMakeToast);
+
+    document.body.addEventListener('paste', this.handlePaste.bind(this));
 
 }
 

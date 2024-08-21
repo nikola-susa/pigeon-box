@@ -136,7 +136,7 @@ templ Home(thread model.RenderThread, id string, user model.RenderUser) {
                             <div hx-swap="none" sse-swap={ "expired:" + id }></div>
                             <div hx-swap="none" sse-swap={ "logout:" + id }></div>
 
-                            <div hx-get={ "/t/" + id + "/m" } hx-trigger="revealed" class="relative mx-1.5" hx-swap="outerHTML">
+                            <div hx-get={ "/t/" + id + "/m" } hx-trigger="revealed" class="relative mx-1.5 space-y-6" hx-swap="outerHTML">
                                 @chatSkeli()
                                 @chatSkeli()
                                 @chatSkeli()
@@ -189,16 +189,19 @@ templ SlackWorkspace(name string) {
 }
 
 templ ThreadPresence(users []model.RenderUser, preview []model.RenderUser, count string, threadId string, iteration string) {
-    <div x-data="{ open: false, timeout: null }" @mouseleave="timeout = setTimeout(() => { open = false }, 700)" @click="open = true; clearTimeout(timeout)">
-        <div hx-get={ "/t/" + threadId + "/presence?i=" + iteration } hx-trigger={"every " + iteration + "s"} hx-swap="outerHTML" x-ref="users">
+    <div hx-get={ "/t/" + threadId + "/presence?i=" + iteration } hx-trigger={"every " + iteration + "s"} hx-sync="this:replace" hx-swap="outerHTML"
+        x-data="{ open: false, timeout: null }" @mouseleave="timeout = setTimeout(() => { open = false }, 700)" @click="open = true; clearTimeout(timeout)">
+        <div x-ref="users">
             <div class="flex items-center gap-0.5 rounded ring ring-[1px] ring-border p-0.5">
-                <ul class="isolate avatar-list gap-0.5">
-                   for _, user := range preview {
-                        <li class="w-4 h-4 ring-2 ring-background rounded shadow bg-sidebar relative cursor-pointer">
-                            <img src={ user.Avatar } class="absolute inset-0 rounded flex justify-center items-center text-sm text-primary" alt={ user.Username } loading="lazy"/>
-                        </li>
-                  }
-                </ul>
+                if count != "0" {
+                    <ul class="isolate avatar-list gap-0.5">
+                       for _, user := range preview {
+                            <li class="w-4 h-4 ring-2 ring-background rounded shadow bg-sidebar relative">
+                                <img src={ user.Avatar } class="absolute inset-0 rounded flex justify-center items-center text-sm text-primary" alt={ user.Username } loading="lazy"/>
+                            </li>
+                      }
+                    </ul>
+                }
                 <div class="flex items-center justify-center items-center text-sm text-alt-foreground font-mono bg-border/70 rounded w-4 h-4">
                     { count }
                 </div>
@@ -223,16 +226,14 @@ templ ThreadPresence(users []model.RenderUser, preview []model.RenderUser, count
 }
 
 templ chatSkeli() {
-    <div class="rounded border shadow p-3 mx-1.5 mb-1.5">
+    <div class="mx-1.5 mb-1.5">
       <div class="animate-pulse flex space-x-3">
-        <div class="rounded bg-sidebar h-5 w-5"></div>
+        <div class="rounded bg-sidebar/70 h-5 w-5"></div>
         <div class="flex-1 space-y-3 py-1">
-          <div class="h-2 bg-alt rounded"></div>
+          <div class="h-2 w-12 bg-sidebar/50 rounded"></div>
           <div class="space-y-3">
-            <div class="grid grid-cols-3 gap-4">
-              <div class="h-2 bg-alt rounded col-span-2"></div>
-              <div class="h-2 bg-alt rounded col-span-1"></div>
-            </div>
+              <div class="h-2 bg-sidebar/30 rounded"></div>
+              <div class="h-2 bg-sidebar/40 rounded"></div>
           </div>
         </div>
       </div>

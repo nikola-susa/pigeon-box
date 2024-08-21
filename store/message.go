@@ -56,9 +56,9 @@ func (s *Store) GetMessagesByThread(threadId int, lastId *int) ([]model.Message,
 	var messages []model.Message
 	var err error
 	if lastId != nil {
-		err = s.db.Select(&messages, `SELECT id, thread_id, user_id, file_id, text, created_at, updated_at FROM message WHERE thread_id = ? AND id < ? ORDER BY created_at DESC LIMIT 25`, threadId, *lastId)
+		err = s.db.Select(&messages, `SELECT id, thread_id, user_id, file_id, text, created_at, updated_at FROM message WHERE thread_id = ? AND id < ? ORDER BY created_at DESC LIMIT 7`, threadId, *lastId)
 	} else {
-		err = s.db.Select(&messages, `SELECT id, thread_id, user_id, file_id, text, created_at, updated_at FROM message WHERE thread_id = ? ORDER BY created_at DESC LIMIT 25`, threadId)
+		err = s.db.Select(&messages, `SELECT id, thread_id, user_id, file_id, text, created_at, updated_at FROM message WHERE thread_id = ? ORDER BY created_at DESC LIMIT 7`, threadId)
 	}
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -113,7 +113,7 @@ func (s *Store) DeleteMessage(messageID int) error {
 func (s *Store) DeleteExpiredMessages() error {
 	_, err := s.db.ExecContext(
 		context.Background(),
-		`DELETE FROM message WHERE expires_at > DATETIME('now')`,
+		`DELETE FROM message WHERE expires_at < DATETIME('now')`,
 	)
 	if err != nil {
 		return fmt.Errorf("delete expired messages: %w", err)
@@ -124,7 +124,7 @@ func (s *Store) DeleteExpiredMessages() error {
 
 func (s *Store) GetExpiredMessages() ([]model.Message, error) {
 	var messages []model.Message
-	err := s.db.Select(&messages, `SELECT id, thread_id, user_id, file_id, text, created_at, updated_at FROM message WHERE expires_at > DATETIME('now')`)
+	err := s.db.Select(&messages, `SELECT id, thread_id, user_id, file_id, text, created_at, updated_at FROM message WHERE expires_at < DATETIME('now')`)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil

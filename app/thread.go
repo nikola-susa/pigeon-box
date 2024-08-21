@@ -425,7 +425,6 @@ func (a *App) HandleThreadPresence(w http.ResponseWriter, r *http.Request) {
 	iterationInt, err := strconv.Atoi(iteration)
 
 	presentHashes := a.Event.PresentUsers(threadId)
-	presentUsersCount := strconv.Itoa(len(presentHashes))
 
 	hashSet := make(map[string]struct{})
 	for _, hash := range presentHashes {
@@ -436,6 +435,8 @@ func (a *App) HandleThreadPresence(w http.ResponseWriter, r *http.Request) {
 	for hash := range hashSet {
 		uniquePresentHashes = append(uniquePresentHashes, hash)
 	}
+
+	presentUsersCount := strconv.Itoa(len(uniquePresentHashes))
 
 	var presentUsers []model.RenderUser
 	var previewUsers []model.RenderUser
@@ -481,14 +482,14 @@ func (a *App) HandleThreadPresence(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	newIter := "180"
+	newIter := "120"
 	switch iterationInt {
 	case 1, 2, 3, 4, 5, 6:
 		newIter = "15"
 	case 7, 8, 9:
-		newIter = "60"
+		newIter = "30"
 	case 10, 11, 12:
-		newIter = "120"
+		newIter = "60"
 
 	}
 

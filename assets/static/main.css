@@ -143,11 +143,11 @@
         @apply overflow-auto w-full;
     }
 
-    .chat a {
+    .chat p > a {
         @apply text-secondary underline;
     }
 
-    .chat a:hover {
+    .chat p > a:hover {
         @apply text-secondary/70;
     }
 
