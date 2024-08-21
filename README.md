@@ -59,6 +59,26 @@ Messages are stored on your server and are deleted after the set expiration time
 
 ---
 
+## Features
+
+1. Encrypted messages and files. 
+   - Encrypted using thread specific keys.
+2. Expiring messages and threads.
+   - Messages and threads are deleted after the set expiration time.
+   - Thread expiration rules are set by the thread creator.
+3. User authentication via Slack.
+   - Access to threads is restricted to the slack group members only.
+   - Authentication is on per thread basis.
+4. Real-time thread updates.
+   - CRUD on messages and files are synced in real-time.
+   - List of currently present users.
+
+
+![cover](docs/cover.png "Pigeon Box")
+
+
+---
+
 ## Deployment Guides
 
 1. [Slack Bot](docs/GUIDES.md#slack-bot)
