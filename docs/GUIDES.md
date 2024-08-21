@@ -174,14 +174,13 @@ Dockerfile is available, and I'll be adding more deployment instructions soon/as
 
 #### Fly.io
 
-This is the easiest[^1] and very cost-effective way to deploy Pigeon box.
+This is likely the easiest[^1] and affordable eay to deploy Pigeon box.
 
-You can run it on a single `shared-cpu-1x@256MB`[^3] instance with a minimal setup, assuming you're using managed sqlite and cloud storage for files.
-However, with the shared instances, the app feel sluggish - decryption and encryption take a bit longer. 
+You can run it on a single `shared-cpu-1x@256MB` instance with a minimal setup, assuming you're using managed sqlite and cloud storage for files.
+However, with the shared instances, the app may feel sluggish at times - especially encryption. 
 
 [^1]: Minimal technical knowledge is required to deploy on fly.io.
 
-[^2]: This is the smallest machine size currently available on fly.io
 
 
 ##### Steps to deploy
